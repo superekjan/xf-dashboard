@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>香港消防設備管理總覽 · L1</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="screen">
+
+  <!-- 顶部标题栏 + 主导航 -->
+  <header class="hd">
+    <div class="hd-left">
+      <div class="hd-brand" id="brandIcon"></div>
+      <div class="hd-title">
+        <h1 data-i18n="香港消防設備管理總覽">香港消防設備管理總覽</h1>
+        <p>HONG KONG FIRE EQUIPMENT MONITORING</p>
+      </div>
+    </div>
+    <nav class="main-nav" id="mainNav"></nav>
+    <div class="hd-right">
+      <div class="hd-score" id="hdScore"></div>
+      <div class="tb-ctrl" id="tbCtrl"></div>
+    </div>
+  </header>
+
+  <!-- KPI 指标带 -->
+  <section class="kpis stagger" id="kpis"></section>
+
+  <!-- 主体三栏 -->
+  <div class="row">
+
+    <!-- 左栏 -->
+    <div class="col left stagger">
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="設備狀態分布">設備狀態分布</h2><span class="p-sub" id="devSub"></span></header>
+        <div class="p-bd"><div class="donut-wrap" id="devDonut"></div></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="項目狀況">項目狀況</h2><span class="p-sub" id="projSub"></span></header>
+        <div class="p-bd" id="projPanel"></div>
+      </section>
+    </div>
+
+    <!-- 中央高德地图 -->
+    <section class="panel map-panel">
+      <div class="map-tools">
+        <div class="search" id="mapSearch">
+          <span id="searchIcon"></span>
+          <input type="text" data-i18n-ph="搜索物業名稱…" placeholder="搜索物業名稱…" id="searchInput">
+        </div>
+        <div class="chips" id="regionChips">
+          <button class="chip on" data-r="ALL" data-i18n="全港">全港</button>
+          <button class="chip" data-r="HK" data-i18n="香港島">香港島</button>
+          <button class="chip" data-r="KL" data-i18n="九龍">九龍</button>
+          <button class="chip" data-r="NT" data-i18n="新界">新界</button>
+        </div>
+      </div>
+      <div id="gdMap"></div>
+      <div class="map-legend">
+        <span><i style="background:var(--crit)"></i><em data-i18n="嚴重告警" style="font-style:normal">嚴重告警</em></span>
+        <span><i style="background:var(--warn)"></i><em data-i18n="維護/一般告警" style="font-style:normal">維護/一般告警</em></span>
+        <span><i style="background:var(--ok)"></i><em data-i18n="運行正常" style="font-style:normal">運行正常</em></span>
+        <span><i style="background:var(--idle)"></i><em data-i18n="數據中斷" style="font-style:normal">數據中斷</em></span>
+      </div>
+      <div class="map-hover-card" id="hoverCard" style="display:none"></div>
+    </section>
+
+    <!-- 右栏 -->
+    <div class="col right l1r stagger">
+      <section class="panel">
+        <header class="p-hd">
+          <h2 data-i18n="系統健康趨勢">系統健康趨勢</h2>
+          <div class="chips" id="trendChips">
+            <button class="chip on" data-t="24h" data-i18n="24小時">24小時</button>
+            <button class="chip" data-t="7d" data-i18n="7天">7天</button>
+            <button class="chip" data-t="30d" data-i18n="30天">30天</button>
+          </div>
+        </header>
+        <div class="p-bd" id="trendPanel" style="padding-bottom:4px"></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="感測器狀態概覽">感測器狀態概覽</h2><span class="p-sub" id="sensorSub"></span></header>
+        <div class="p-bd" id="sensorPanel"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 底部：维护计划 + 最新告警 -->
+  <div class="row stagger" style="grid-template-rows:auto;grid-template-columns:1fr 1.25fr">
+    <section class="panel">
+      <header class="p-hd"><h2 data-i18n="維護計劃">維護計劃</h2><span class="p-sub" data-i18n="今日起 7 天">今日起 7 天</span></header>
+      <div class="p-bd" id="maintPanel"></div>
+    </section>
+    <section class="panel">
+      <header class="p-hd">
+        <h2 data-i18n="最新告警">最新告警</h2>
+        <div class="chips" id="alarmChips">
+          <button class="chip on" data-l="0" data-i18n="全部">全部</button>
+          <button class="chip" data-l="1" data-i18n="嚴重">嚴重</button>
+          <button class="chip" data-l="2" data-i18n="一般">一般</button>
+          <button class="chip" data-l="3" data-i18n="預警">預警</button>
+        </div>
+      </header>
+      <div class="p-bd" id="alarmPanel"></div>
+    </section>
+  </div>
+</div>
+
+<script src="https://webapi.amap.com/maps?v=2.0&key=482b385813c3145a2d7cbc16e38c318f"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/common.js"></script>
+<script src="js/l1.js"></script>
+</body>
+</html>

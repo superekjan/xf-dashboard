@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>物業級消防設備大屏 · L2</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="screen">
+
+  <!-- 顶部：返回 + 物业信息 + 主导航 -->
+  <header class="hd">
+    <div class="hd-left">
+      <button class="btn-back" id="backBtn"></button>
+      <div class="hd-brand" id="brandIcon"></div>
+      <div class="hd-title">
+        <h1 id="pName">—</h1>
+        <p id="pMeta">—</p>
+      </div>
+      <div class="hd-crumb">
+        <i data-i18n="全港總覽">全港總覽</i><span id="crumbSep">/</span><b id="crumbNow">—</b>
+      </div>
+      <div class="hd-sub" id="pContact"></div>
+    </div>
+    <nav class="main-nav" id="mainNav"></nav>
+    <div class="hd-right">
+      <div class="hd-score" id="hdScore"></div>
+      <div class="tb-ctrl" id="tbCtrl"></div>
+    </div>
+  </header>
+
+  <!-- KPI -->
+  <section class="kpis stagger" id="kpis"></section>
+
+  <div class="row">
+    <!-- 左栏 -->
+    <div class="col left stagger">
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="設備狀態分布">設備狀態分布</h2><span class="p-sub" data-i18n="本物業">本物業</span></header>
+        <div class="p-bd"><div class="donut-wrap" id="devDonut"></div></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="感測器分類統計">感測器分類統計</h2><span class="p-sub" id="sensorSub"></span></header>
+        <div class="p-bd" id="sensorPanel"></div>
+      </section>
+    </div>
+
+    <!-- 中央楼宇分布 -->
+    <section class="panel">
+      <div class="b-toolbar">
+        <div class="search" id="bSearch"><span id="searchIcon"></span><input id="searchInput" data-i18n-ph="搜索樓宇名稱…" placeholder="搜索樓宇名稱…" type="text"></div>
+        <div class="chips" id="bChips">
+          <button class="chip on" data-f="all" data-i18n="全部">全部</button>
+          <button class="chip" data-f="alarm" data-i18n="告警">告警</button>
+          <button class="chip" data-f="maint" data-i18n="維護">維護</button>
+          <button class="chip" data-f="offline" data-i18n="離線">離線</button>
+          <button class="chip" data-f="ok" data-i18n="在線">在線</button>
+        </div>
+        <span style="flex:1"></span>
+        <span class="p-sub" id="bCount"></span>
+      </div>
+      <div class="b-grid" id="bGrid"></div>
+    </section>
+
+    <!-- 右栏 -->
+    <div class="col right l2r stagger">
+      <section class="panel">
+        <header class="p-hd">
+          <h2 data-i18n="物業告警清單">物業告警清單</h2>
+          <div class="chips" id="bFilter"><button class="chip on" data-b="" data-i18n="全部樓宇">全部樓宇</button></div>
+        </header>
+        <div class="p-bd" id="alarmPanel"></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="維護計劃">維護計劃</h2><span class="p-sub" data-i18n="未來 7 天">未來 7 天</span></header>
+        <div class="p-bd" id="maintPanel"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 底部楼宇对比 -->
+  <div class="row stagger" style="grid-template-rows:auto;grid-template-columns:1fr 1fr">
+    <section class="panel">
+      <header class="p-hd"><h2 data-i18n="各樓宇設備在線率">各樓宇設備在線率</h2><span class="p-sub" data-i18n="點擊進入樓宇">點擊進入樓宇</span></header>
+      <div class="p-bd" id="barOnline"></div>
+    </section>
+    <section class="panel">
+      <header class="p-hd"><h2 data-i18n="各樓宇告警數量">各樓宇告警數量</h2><span class="p-sub" data-i18n="點擊進入樓宇">點擊進入樓宇</span></header>
+      <div class="p-bd" id="barAlarm"></div>
+    </section>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/common.js"></script>
+<script src="js/l2.js"></script>
+</body>
+</html>

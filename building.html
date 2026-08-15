@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>樓宇樓層消防設備大屏 · L3</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="screen">
+
+  <!-- 顶部 -->
+  <header class="hd">
+    <div class="hd-left">
+      <button class="btn-back" id="backBtn"></button>
+      <div class="hd-brand" id="brandIcon"></div>
+      <div class="hd-title">
+        <h1 id="bName">—</h1>
+        <p id="bMeta">—</p>
+      </div>
+      <div class="hd-crumb"><i data-i18n="全港總覽">全港總覽</i><i id="crumbP">/</i><b id="crumbNow">—</b></div>
+      <div class="hd-sub" id="tenant"></div>
+    </div>
+    <nav class="main-nav" id="mainNav"></nav>
+    <div class="hd-right">
+      <div class="hd-score" id="hdScore"></div>
+      <div class="tb-ctrl" id="tbCtrl"></div>
+    </div>
+  </header>
+
+  <!-- KPI -->
+  <section class="kpis stagger" id="kpis"></section>
+
+  <div class="row l3-row">
+    <!-- 左栏 -->
+    <div class="col left stagger">
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="當前樓層設備狀態">當前樓層設備狀態</h2><span class="p-sub" id="floorTag2"></span></header>
+        <div class="p-bd"><div class="donut-wrap" id="devDonut"></div></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="感測器類型統計">感測器類型統計</h2><span class="p-sub" data-i18n="當前樓層">當前樓層</span></header>
+        <div class="p-bd" id="sensorPanel"></div>
+      </section>
+    </div>
+
+    <!-- 中央：楼层切换 + 平面图 -->
+    <section class="panel" style="overflow:hidden">
+      <div class="plan-wrap">
+        <nav class="floor-rail" id="floorRail"></nav>
+        <div class="plan-stage" id="planStage">
+          <div class="floor-tag" id="floorTag"></div>
+          <div class="plan-zoom">
+            <button id="zin" title="放大" data-i18n-title="放大">＋</button>
+            <button id="zout" title="縮小" data-i18n-title="縮小">－</button>
+            <button id="zreset" title="重置視圖" data-i18n-title="重置視圖" data-i18n="重置" style="font-size:11px">重置</button>
+          </div>
+          <svg class="plan-svg" id="planSvg"></svg>
+          <div class="plan-legend">
+            <div class="lg2" style="gap:14px" id="lgTypes"></div>
+            <div class="lg2" style="gap:12px;margin-top:2px">
+              <span class="lg2"><i style="width:8px;height:8px;border-radius:50%;background:var(--ok)"></i><em style="font-style:normal" data-i18n="在線">在線</em></span>
+              <span class="lg2"><i style="width:8px;height:8px;border-radius:50%;background:var(--crit)"></i><em style="font-style:normal" data-i18n="高級">高級</em></span>
+              <span class="lg2"><i style="width:8px;height:8px;border-radius:50%;background:var(--warn)"></i><em style="font-style:normal" data-i18n="維護">維護</em></span>
+              <span class="lg2"><i style="width:8px;height:8px;border-radius:50%;background:var(--idle)"></i><em style="font-style:normal" data-i18n="離線">離線</em></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右栏 -->
+    <div class="col right l3r stagger">
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="當前樓層告警">當前樓層告警</h2><span class="p-sub" data-i18n="點擊定位設備">點擊定位設備</span></header>
+        <div class="p-bd" id="alarmPanel"></div>
+      </section>
+      <section class="panel">
+        <header class="p-hd"><h2 data-i18n="設備詳情">設備詳情</h2><span class="p-sub" id="devSub" data-i18n="點擊平面圖設備查看">點擊平面圖設備查看</span></header>
+        <div class="p-bd" id="devPanel"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 底部楼层对比 -->
+  <div class="row stagger" style="grid-template-rows:auto;grid-template-columns:1fr 1fr">
+    <section class="panel">
+      <header class="p-hd"><h2 data-i18n="各樓層設備在線率">各樓層設備在線率</h2><span class="p-sub" data-i18n="點擊切換樓層">點擊切換樓層</span></header>
+      <div class="p-bd" id="barOnline"></div>
+    </section>
+    <section class="panel">
+      <header class="p-hd"><h2 data-i18n="各樓層告警數量">各樓層告警數量</h2><span class="p-sub" data-i18n="點擊切換樓層">點擊切換樓層</span></header>
+      <div class="p-bd" id="barAlarm"></div>
+    </section>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/common.js"></script>
+<script src="js/l3.js"></script>
+</body>
+</html>
