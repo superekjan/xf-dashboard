@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>九龍數字孿生園區 · Omni OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0B0F; --txt:#F5F5F7; --dim:#98989D; --dim2:#6E6E73;
+  --normal:#0A84FF; --risk:#FF9F0A; --alarm:#FF453A; --ok:#30D158; --excel:#22C55E; --teal:#64D2FF;
+  --accent:#0A84FF;
+  --panel:rgba(30,30,34,.62); --panel2:rgba(46,46,50,.5);
+  --card:rgba(52,52,56,.42); --card-hi:rgba(70,70,74,.5);
+  --line:rgba(255,255,255,.1); --line2:rgba(255,255,255,.05);
+  --glass:rgba(26,26,30,.66);
+  --shadow:0 18px 44px rgba(0,0,0,.42);
+  --glow:rgba(10,132,255,.3);
+  --ease:cubic-bezier(.28,.11,.32,1);
+}
+[data-theme=light]{
+  --bg:#F2F2F7; --txt:#1C1C1E; --dim:#6E6E73; --dim2:#AEAEB2;
+  --normal:#007AFF; --risk:#FF9500; --alarm:#FF3B30; --ok:#34C759; --excel:#22C55E; --teal:#32ADE6;
+  --panel:rgba(255,255,255,.66); --panel2:rgba(250,250,252,.55);
+  --card:rgba(255,255,255,.72); --card-hi:rgba(255,255,255,.85);
+  --line:rgba(0,0,0,.08); --line2:rgba(0,0,0,.05);
+  --glass:rgba(255,255,255,.7);
+  --shadow:0 16px 40px rgba(30,40,60,.12);
+  --glow:rgba(10,132,255,.22);
+}
+*{margin:0;padding:0;box-sizing:border-box;font-variant-numeric:tabular-nums}
+html,body{width:100%;height:100%;background:#000;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','PingFang TC','Segoe UI','Noto Sans TC',sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased}
+#stage{width:100%;height:100%;position:relative;overflow:hidden;
+  background:radial-gradient(1400px 900px at 50% -20%,#15151C 0%,transparent 62%),linear-gradient(180deg,#0E0E13,#0B0B0F)}
+[data-theme=light] #stage{background:radial-gradient(1400px 900px at 50% -20%,#FFFFFF 0%,transparent 62%),linear-gradient(180deg,#F7F7FA,#EFEFF4)}
+.aurora{position:absolute;border-radius:50%;filter:blur(140px);pointer-events:none;z-index:1;transition:transform .6s var(--ease)}
+.au1{width:900px;height:700px;left:-220px;top:-280px;background:radial-gradient(circle,rgba(10,132,255,.12),transparent 65%)}
+.au2{width:820px;height:660px;right:-240px;bottom:-220px;background:radial-gradient(circle,rgba(94,92,230,.09),transparent 65%)}
+[data-theme=light] .aurora{display:none}
+
+/* map scene */
+#scene{position:absolute;inset:0;z-index:2}
+#map{position:absolute;inset:0;filter:invert(.92) hue-rotate(185deg) saturate(.5) brightness(.82) contrast(1.06);transition:filter .5s}
+[data-theme=light] #map{filter:none}
+#mapFallback{position:absolute;inset:0;display:none;
+  background:radial-gradient(760px 520px at 50% 46%,rgba(28,66,128,.4),transparent 70%),linear-gradient(160deg,#081631,#040b1c)}
+#mapFallback .gridlines{position:absolute;inset:0;
+  background-image:linear-gradient(rgba(90,169,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(90,169,255,.05) 1px,transparent 1px);
+  background-size:48px 48px;
+  -webkit-mask-image:radial-gradient(ellipse at 50% 46%,#000 15%,transparent 75%);
+  mask-image:radial-gradient(ellipse at 50% 46%,#000 15%,transparent 75%)}
+#fbLayer{position:absolute;inset:0}
+#fbLayer .beacon{position:absolute}
+/* soft depth-of-field vignette (Apple 克制) */
+.dof{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:
+    radial-gradient(ellipse 82% 74% at 50% 48%,transparent 62%,rgba(4,7,14,.34) 100%),
+    linear-gradient(180deg,rgba(4,7,14,.5) 0%,transparent 15%,transparent 86%,rgba(4,7,14,.55) 100%)}
+[data-theme=light] .dof{background:
+  radial-gradient(ellipse 82% 74% at 50% 48%,transparent 62%,rgba(220,228,240,.3) 100%),
+  linear-gradient(180deg,rgba(242,245,250,.55) 0%,transparent 15%,transparent 86%,rgba(242,245,250,.6) 100%)}
+
+/* markers: pulsing dots */
+.beacon{position:absolute;left:0;top:0;z-index:6}
+.bpin{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:30px;height:30px;pointer-events:auto;cursor:pointer}
+.bpin .core{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;
+  background:currentColor;border:2px solid rgba(255,255,255,.95);box-shadow:0 0 8px currentColor,0 0 20px currentColor;
+  transition:transform .2s}
+.bpin:hover .core{transform:scale(1.35)}
+.bpin .wave{position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  border:1.6px solid currentColor;animation:wave 2.6s cubic-bezier(.2,.6,.4,1) infinite}
+.bpin .wave.w2{animation-delay:1.3s}
+@keyframes wave{from{transform:scale(.55);opacity:.9}to{transform:scale(3.4);opacity:0}}
+.bpin.alarm .wave{animation-duration:1.5s}
+.bpin.alarm .wave.w2{animation-delay:.75s}
+.mtip{position:absolute;bottom:22px;left:50%;transform:translate(-50%,6px);z-index:20;white-space:nowrap;
+  background:rgba(10,17,32,.94);border-radius:8px;padding:7px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  font-size:12px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+[data-theme=light] .mtip{background:rgba(255,255,255,.95);color:#0F172A}
+.mtip small{display:block;font-size:9px;color:var(--dim);letter-spacing:1px;font-weight:500;margin-top:1px}
+.beacon:hover .mtip{opacity:1;transform:translate(-50%,0)}
+#mtip2{position:absolute;left:0;top:0;z-index:20;display:none;transform:translate(-50%,-135%);white-space:nowrap;
+  background:rgba(10,17,32,.94);border-radius:8px;padding:7px 12px;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  font-size:12px;font-weight:600;color:var(--txt);pointer-events:none}
+#mtip2 small{display:block;font-size:9px;color:var(--dim);letter-spacing:1px;font-weight:500;margin-top:1px}
+[data-theme=light] #mtip2{background:rgba(255,255,255,.95);color:#0F172A}
+
+/* glass → Apple 通透材质（vibrancy） */
+.glass{background:var(--glass);border-radius:16px;
+  backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+  border:1px solid var(--line2);
+  box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05)}
+[data-theme=light] .glass{border-color:var(--line)}
+
+/* nav — Apple 工具栏 */
+#topnav{position:absolute;top:0;left:0;right:0;height:64px;z-index:20;display:flex;align-items:center;
+  padding:0 26px;gap:18px;background:var(--glass);
+  backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-bottom:1px solid var(--line2)}
+.brand{display:flex;align-items:center;gap:11px;width:300px}
+.brand .lg{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(10,132,255,.16)}
+.brand .lg svg{width:16px;height:16px}
+.brand .b1{font-size:13px;font-weight:600;letter-spacing:.2px}
+.brand .b2{font-size:8px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+.nav{display:flex;gap:2px;flex:1;justify-content:center}
+.nitem{padding:6px 15px;font-size:13px;font-weight:500;color:var(--dim);cursor:pointer;
+  transition:all .22s var(--ease);letter-spacing:.3px;white-space:nowrap;border-radius:8px}
+.nitem:hover{color:var(--txt);background:rgba(120,120,128,.12)}
+.nitem.on{color:var(--txt);background:rgba(120,120,128,.18)}
+.nctl{display:flex;align-items:center;gap:8px;width:300px;justify-content:flex-end}
+.ctl-btn{width:30px;height:30px;border-radius:8px;background:transparent;
+  display:grid;place-items:center;cursor:pointer;transition:all .2s;color:var(--dim)}
+.ctl-btn:hover{background:rgba(120,120,128,.14);color:var(--txt)}
+.ctl-btn svg{width:15px;height:15px}
+.ctl-btn .i-moon{display:none}
+[data-theme=light] .ctl-btn .i-moon{display:block}
+[data-theme=light] .ctl-btn .i-sun{display:none}
+.lang-btn{width:auto;padding:0 11px;font-size:11.5px;font-weight:600;letter-spacing:.5px}
+.user-chip{display:flex;align-items:center;gap:8px;padding:4px 11px 4px 5px;border-radius:9px;
+  background:transparent;cursor:pointer;position:relative;transition:all .2s}
+.user-chip:hover{background:rgba(120,120,128,.14)}
+.user-chip .av{width:24px;height:24px;border-radius:8px;background:linear-gradient(135deg,#0A84FF,#30B0C7);
+  display:grid;place-items:center;font-weight:600;font-size:11px;color:#fff}
+.user-chip .un{font-size:11.5px;font-weight:600}
+.user-chip svg{width:11px;height:11px;stroke:var(--dim)}
+.udrop{position:absolute;background:rgba(26,26,30,1);top:42px;right:0;width:232px;padding:6px;border-radius:13px;display:none;z-index:50}
+.udrop.open{display:block}
+.udrop .uhd{padding:11px 12px;border-bottom:1px solid var(--line2);margin-bottom:6px}
+.udrop .uhd .n{font-size:13px;font-weight:600}
+.udrop .uhd .e{font-size:11px;color:var(--dim);margin-top:2px}
+.udrop .ui{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;font-size:12px;cursor:pointer;color:var(--txt)}
+.udrop .ui:hover{background:rgba(120,120,128,.12)}
+.udrop .ui svg{width:14px;height:14px;stroke:var(--dim)}
+.udrop .ui.danger{color:#FF453A}
+
+/* ===== dashboard ===== */
+/* central core metrics bar */
+.corebar{position:absolute;top:74px;left:50%;transform:translateX(-50%);z-index:12;display:flex;align-items:stretch;
+  gap:0;padding:6px 8px;border-radius:16px}
+.core-it{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 26px;min-width:108px;position:relative}
+.core-it:not(:first-child)::before{content:"";position:absolute;left:0;top:26%;height:48%;width:1px;background:var(--line2)}
+.core-it .ci-v{font-size:24px;margin-top:5px;font-weight:700;line-height:1;letter-spacing:-.5px}
+.core-it .ci-l{font-size:9px;color:var(--dim);letter-spacing:1px;margin-top:4px}
+.panel{position:absolute;top:146px;bottom:96px;width:340px;z-index:10;padding:18px 18px 22px;
+  display:flex;flex-direction:column;gap:13px;overflow:hidden auto;scrollbar-width:none}
+.panel::-webkit-scrollbar{display:none}
+.panel.left{left:18px}.panel.right{right:18px}
+.panel h4{font-size:10.5px;letter-spacing:.8px;color:var(--dim);font-weight:600;text-transform:none;
+  display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:2px 2px;margin:0}
+.panel h4::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.panel h4 svg{width:15px;height:15px;stroke:var(--dim)}
+.panel h4 .ph-r{margin-left:auto;font-size:9.5px;color:var(--dim);letter-spacing:0;text-transform:none;font-weight:500}
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ov{position:relative;padding:13px 14px;border-radius:13px;background:transparent;overflow:hidden;border:1px solid var(--line2)}
+.ov .oh{display:flex;align-items:center;justify-content:flex-start}
+.ov .oh .oi{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:rgba(120,120,128,.14)}
+.ov .oh svg{width:13px;height:13px}
+.ov .n{font-size:23px;font-weight:700;margin-top:10px;line-height:1;letter-spacing:-.3px}
+.ov .l{font-size:9px;color:var(--dim);letter-spacing:.6px;margin-top:4px}
+.blist{display:flex;flex-direction:column;gap:2px}
+.brow{display:flex;align-items:center;gap:10px;padding:8px 9px;border-radius:10px;cursor:pointer;transition:background .18s;position:relative}
+.brow:hover{background:rgba(120,120,128,.12)}
+.brow::after{content:"";position:absolute;left:38px;bottom:0;right:0;height:1px;background:var(--line2)}
+.brow:last-child::after{display:none}
+.brow .sd{width:8px;height:8px;border-radius:50%;flex:0 0 auto;position:relative}
+.brow .bn{flex:1;font-size:12px;font-weight:500;min-width:0}
+.brow .bn small{display:block;font-size:8.5px;color:var(--dim);letter-spacing:.4px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow .bs{font-size:12.5px;font-weight:600}
+.brow .bs small{display:block;font-size:7.5px;color:var(--dim);font-weight:500;text-align:right}
+.al-item{display:flex;gap:10px;padding:11px 12px;border-radius:13px;background:transparent;align-items:flex-start;border:1px solid var(--line2)}
+.al-item .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto}
+.al-item .ic svg{width:14px;height:14px}
+.al-item .t1{font-size:11.5px;font-weight:600}
+.al-item .t2{font-size:9px;color:var(--dim);margin-top:3px}
+.al-item .tm{margin-left:auto;font-size:8.5px;color:var(--dim);flex:0 0 auto;text-align:right;line-height:1.5}
+.tag{margin-left:auto;font-size:9px;font-weight:600;letter-spacing:.6px;padding:3px 9px;border-radius:999px;flex:0 0 auto;white-space:nowrap}
+.tag.rd{color:#FF6961;background:rgba(255,69,58,.16)}
+.tag.am{color:#FFB340;background:rgba(255,159,10,.16)}
+.tag.bl{color:#64A8FF;background:rgba(10,132,255,.16)}
+.tag.gn{color:#3FD68F;background:rgba(48,209,88,.16)}
+.tag.gr{color:#98989D;background:rgba(120,120,128,.16)}
+.prog .pr{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:7px;letter-spacing:.4px}
+.prog .pr b{color:var(--txt);font-size:10.5px;font-weight:600}
+.prog .bar{height:5px;border-radius:3px;background:rgba(120,120,128,.16);overflow:hidden}
+.prog .bar i{display:block;height:100%;width:0;border-radius:3px;transition:width 1.6s var(--ease)}
+.chart-div{width:100%;height:74px}
+.dock{position:absolute;bottom:66px;left:50%;transform:translateX(-50%);z-index:12;display:flex;align-items:center;
+  gap:18px;padding:9px 20px;border-radius:999px}
+.dock .li{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--dim);letter-spacing:.6px}
+.dock .li .d{width:8px;height:8px;border-radius:50%}
+.dock .vsep{width:1px;height:16px;background:var(--line2)}
+.dock .hint{font-size:9px;color:var(--dim);letter-spacing:1px}
+#resetView{display:none;padding:7px 16px;border-radius:999px;background:rgba(10,132,255,.16);
+  color:#64A8FF;font-size:11px;font-weight:600;letter-spacing:.6px;cursor:pointer;transition:all .2s}
+#resetView:hover{background:rgba(10,132,255,.28)}
+footer{position:absolute;left:26px;bottom:18px;z-index:9;font-size:9px;color:var(--dim);letter-spacing:.8px;line-height:1.7}
+footer b{font-weight:600}
+.f-r{position:absolute;right:26px;bottom:18px;z-index:9;text-align:right;font-size:9px;color:var(--dim);letter-spacing:.8px;line-height:1.7}
+
+/* building detail card */
+#bcard{position:absolute;right:372px;top:96px;width:300px;z-index:15;padding:20px;
+  opacity:0;pointer-events:none;transform:translateX(16px);transition:all .35s var(--ease)}
+#bcard.show{opacity:1;pointer-events:auto;transform:none}
+#bcard .hn{font-size:14px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+#bcard .hsub{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:3px}
+#bcard .hdiv{height:1px;background:var(--line2);margin:13px 0}
+.score-r{display:flex;align-items:baseline;gap:8px;margin-top:3px}
+.score-n{font-size:26px;font-weight:600;line-height:1}
+.score-t{font-size:10px;padding:2px 9px;border-radius:5px;font-weight:600}
+.sbar{height:4px;border-radius:2px;background:rgba(120,160,220,.15);margin-top:9px;overflow:hidden}
+.sbar i{display:block;height:100%;border-radius:2px;transition:width .8s var(--ease)}
+.grid4{display:grid;grid-template-columns:1fr 1fr;gap:9px 14px;margin-top:13px}
+.g4 .gl{font-size:9.5px;color:var(--dim);letter-spacing:1px}
+.g4 .gv{font-size:13px;font-weight:600;margin-top:2px}
+.enter{margin-top:15px;width:100%;padding:11px;border:none;border-radius:8px;background:linear-gradient(135deg,#0EA5E9,#2563EB);
+  color:#fff;font-size:12.5px;font-weight:600;letter-spacing:2px;cursor:pointer;font-family:inherit;
+  transition:transform .2s var(--ease),box-shadow .2s}
+.enter:hover{transform:translateY(-1px) scale(1.02);box-shadow:0 6px 22px rgba(37,99,235,.5)}
+.ghostbtn{margin-top:9px;width:100%;padding:9px;border-radius:8px;background:rgba(120,160,220,.1);
+  color:var(--dim);font-size:11.5px;cursor:pointer;font-family:inherit}
+.ghostbtn:hover{color:var(--txt)}
+
+/* ===== sub pages ===== */
+.view{position:absolute;inset:0;z-index:5;display:none}
+.view.on{display:block}
+.page{position:absolute;left:0;top:64px;bottom:0;width:100%;z-index:8;
+  padding:26px 34px 46px;overflow:hidden auto;scrollbar-width:none;display:none;border-radius:0}
+.page::-webkit-scrollbar{display:none}
+.page.on{display:block;animation:pgIn .45s var(--ease)}
+@keyframes pgIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;gap:16px;padding-bottom:18px;border-bottom:1px solid var(--line2);margin-bottom:20px}
+.page-head .pt-ico{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(135deg,#0EA5E9,#2563EB);box-shadow:0 0 20px rgba(37,99,235,.35)}
+.page-head .pt-ico svg{width:21px;height:21px;stroke:#fff}
+.page-head h2{font-size:18px;font-weight:700;display:flex;flex-direction:column;gap:3px}
+.page-head h2 .sub{font-size:10px;color:var(--dim);font-weight:500;letter-spacing:1.5px}
+.page-head .ph-actions{margin-left:auto;display:flex;align-items:center;gap:9px}
+.breadcrumb{font-size:10px;color:var(--dim);letter-spacing:.5px;display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.breadcrumb b{color:var(--txt);font-weight:600}
+/* summary strip */
+.sumgrid{display:grid;gap:14px;margin-bottom:20px}
+.sumgrid.g4{grid-template-columns:repeat(4,1fr)}
+.sumgrid.g3{grid-template-columns:repeat(3,1fr)}
+.sum{position:relative;padding:18px 20px;border-radius:8px;background:var(--card);overflow:hidden;transition:.25s}
+.sum:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.sum::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--sc,#38BDF8);box-shadow:0 0 12px var(--sc,#38BDF8)}
+.sum .sh{display:flex;align-items:center;gap:9px;font-size:11px;color:var(--dim);letter-spacing:1px}
+.sum .sh .si{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:rgba(120,160,220,.12)}
+.sum .sh .si svg{width:15px;height:15px}
+.sum .sv{font-size:28px;font-weight:700;margin-top:12px;line-height:1;letter-spacing:-.5px}
+.sum .sv small{font-size:12px;font-weight:500;margin-left:3px;color:var(--dim)}
+.sum .sf{margin-top:9px;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:5px}
+.sum .sf .up{color:var(--ok)}.sum .sf .down{color:var(--alarm)}
+/* tabs */
+.ptabs{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.ptab{padding:7px 17px;border-radius:7px;font-size:11px;color:var(--dim);cursor:pointer;background:rgba(120,160,220,.08);transition:.2s;white-space:nowrap}
+.ptab.on{color:#fff;background:linear-gradient(135deg,#0EA5E9,#2563EB);box-shadow:0 3px 14px rgba(37,99,235,.35)}
+/* generic card */
+.cards{display:grid;gap:16px}
+.chart-box{padding:20px 22px;border-radius:8px;background:transparent}
+.chart-box .ct{font-size:12px;font-weight:600;letter-spacing:1px;display:flex;align-items:center;gap:8px}
+.chart-box .ct::before{content:"";width:3px;height:12px;border-radius:2px;background:var(--normal)}
+.chart-box .cs{font-size:9.5px;color:var(--dim);margin:5px 0 8px 11px}
+.echart{width:100%;height:240px}
+.echart.tall{height:300px}
+/* buttons */
+.btn{padding:9px 17px;border-radius:8px;background:rgba(120,160,220,.1);color:var(--txt);
+  font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;display:inline-flex;align-items:center;gap:7px;letter-spacing:.5px}
+.btn:hover{background:rgba(120,160,220,.22);transform:translateY(-1px)}
+.btn svg{width:14px;height:14px;stroke:currentColor}
+.btn.primary{background:linear-gradient(135deg,#0EA5E9,#2563EB);color:#fff;box-shadow:0 4px 16px rgba(37,99,235,.35)}
+.btn.primary:hover{box-shadow:0 6px 22px rgba(37,99,235,.5)}
+/* search */
+.searchbox{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;background:rgba(120,160,220,.1);min-width:200px}
+.searchbox svg{width:14px;height:14px;stroke:var(--dim)}
+.searchbox input{background:none;border:none;outline:none;color:var(--txt);font-size:11.5px;font-family:inherit;flex:1;min-width:0}
+.searchbox input::placeholder{color:var(--dim)}
+/* data table */
+.dtable{display:flex;flex-direction:column;gap:0;border-radius:8px;background:var(--card);overflow:hidden}
+.thead,.trow{display:grid;align-items:center;gap:14px;padding:0 18px}
+.thead{height:44px;background:var(--panel2);font-size:10px;color:var(--dim);letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+.trow{height:58px;font-size:12px;border-top:1px solid var(--line2);transition:background .18s}
+.trow:hover{background:rgba(120,160,220,.07)}
+.trow .td-main{font-weight:600}
+.trow .td-sub{font-size:10px;color:var(--dim);margin-top:1px}
+.trow .td-dim{color:var(--dim);font-size:11.5px}
+.mini-bar{height:5px;border-radius:3px;background:rgba(120,160,220,.15);overflow:hidden;width:100%}
+.mini-bar i{display:block;height:100%;border-radius:3px}
+.act{color:var(--normal);font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.5px}
+.act:hover{text-decoration:underline}
+/* device cards */
+.dev-card{padding:16px 18px;border-radius:8px;background:var(--card);transition:.25s;position:relative;overflow:hidden}
+.dev-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2.5px;background:var(--dc,#38BDF8);opacity:.7}
+.dev-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.dev-card .dh{display:flex;align-items:center;gap:10px}
+.dev-card .di{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;background:rgba(120,160,220,.12)}
+.dev-card .di svg{width:16px;height:16px}
+.dev-card .dt{flex:1;font-size:12px;font-weight:600}
+.dev-card .dt small{display:block;font-size:9px;color:var(--dim);margin-top:1px}
+.dev-card .dv{display:flex;justify-content:space-between;margin-top:12px;font-size:10.5px;color:var(--dim)}
+.dev-card .dv b{font-size:13px;color:var(--txt);font-weight:600}
+/* report cards */
+.rp-card{padding:20px;border-radius:8px;background:var(--card);transition:.25s;display:flex;flex-direction:column}
+.rp-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.rp-card .ri{width:42px;height:42px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(135deg,#0EA5E9,#2563EB)}
+.rp-card .ri svg{width:20px;height:20px}
+.rp-card .rt{font-size:13px;font-weight:600;margin-top:13px}
+.rp-card .rm{font-size:10px;color:var(--dim);margin-top:4px;letter-spacing:.5px}
+.rp-card .rmeta{display:flex;align-items:center;gap:12px;margin-top:12px;font-size:9.5px;color:var(--dim)}
+.rp-card .rbtn{margin-top:14px;display:flex;gap:8px}
+.dl-btn{flex:1;padding:9px 12px;border-radius:7px;background:rgba(120,160,220,.12);
+  color:var(--txt);font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s}
+.dl-btn:hover{background:linear-gradient(135deg,#0EA5E9,#2563EB);color:#fff}
+.dl-btn.ghost{background:rgba(120,160,220,.06)}
+/* more cards */
+.more-card{padding:22px 20px;border-radius:8px;background:var(--card);cursor:pointer;transition:.25s;display:flex;align-items:flex-start;gap:14px;text-align:left}
+.more-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.more-card .mi{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;background:rgba(120,160,220,.12)}
+.more-card .mi svg{width:21px;height:21px}
+.more-card .mt{font-size:13px;font-weight:600}
+.more-card .ms{font-size:10px;color:var(--dim);margin-top:4px;line-height:1.5}
+.more-card .arrow{margin-left:auto;color:var(--dim);align-self:center}
+.more-card .arrow svg{width:15px;height:15px;stroke:var(--dim)}
+/* section label */
+.sec-label{font-size:10px;color:var(--dim);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin:4px 0 12px;display:flex;align-items:center;gap:8px}
+.sec-label::after{content:"";flex:1;height:1px;background:var(--line2)}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="aurora au1" id="au1"></div>
+  <div class="aurora au2" id="au2"></div>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <div class="view on" id="view-dash">
+    <div id="scene">
+      <div id="mapFallback"><div class="gridlines"></div><div id="fbLayer"></div></div>
+      <div id="map"></div>
+      <div id="mtip2"></div>
+    </div>
+    <div class="dof"></div>
+
+    <!-- central core metrics (top KPI) -->
+    <div class="corebar glass brackets">
+      <div class="core-it"><span class="ci-v" style="color:#7CC4FF" id="coreB">0</span><span class="ci-l" data-i18n="core.bld">總樓宇</span></div>
+      <div class="core-it"><span class="ci-v" style="color:#F8FAFC" id="coreD">0</span><span class="ci-l" data-i18n="core.dev">在線設備</span></div>
+      <div class="core-it"><span class="ci-v" style="color:#34D399" id="coreO">0</span><span class="ci-l" data-i18n="core.online">設備在線率</span></div>
+      <div class="core-it"><span class="ci-v" style="color:#5aa9ff" id="coreH">0</span><span class="ci-l" data-i18n="core.health">健康度總分</span></div>
+      <div class="core-it"><span class="ci-v" style="color:#FF6B61" id="coreA">0</span><span class="ci-l" data-i18n="core.alarm">今日告警</span></div>
+    </div>
+
+    <section class="panel left glass brackets">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg><span data-i18n="p.ov">園區概覽</span></h4>
+      <div class="ov-grid">
+        <div class="ov" style="--oc:#38BDF8"><div class="oh"><div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></div></div><div class="n" id="ovB">0</div><div class="l" data-i18n="p.bld">樓宇</div></div>
+        <div class="ov" style="--oc:#34D399"><div class="oh"><div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.8"><path d="M12 2a7 7 0 0 0-7 7v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9a7 7 0 0 0-7-7z"/></svg></div></div><div class="n" id="ovD">0</div><div class="l" data-i18n="p.dev">在線設備</div></div>
+        <div class="ov" style="--oc:#EF4444"><div class="oh"><div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="#FF6B61" stroke-width="1.8"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5v.5"/></svg></div></div><div class="n" style="color:#FF6B61" id="ovA">0</div><div class="l" data-i18n="p.alm">告警樓宇</div></div>
+        <div class="ov" style="--oc:#F59E0B"><div class="oh"><div class="oi"><svg viewBox="0 0 24 24" fill="none" stroke="#FFB224" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div></div><div class="n" style="color:#FFB224" id="ovR">0</div><div class="l" data-i18n="p.rsk">風險樓宇</div></div>
+      </div>
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg><span data-i18n="p.list">樓宇狀態</span><span class="ph-r" id="ovScoreHint"></span></h4>
+      <div class="blist" id="blist"></div>
+    </section>
+
+    <section class="panel right glass brackets">
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21a2 2 0 0 0 4 0"/></svg><span data-i18n="p.alert">實時告警</span><span class="ph-r" id="alCountHint"></span></h4>
+      <div class="al-item" style="--ac:#EF4444"><div class="ic" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF6B61" stroke-width="2" stroke-linecap="round"><path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4M12 17.5v.5"/></svg></div><div><div class="t1">Harbour Tower · <span data-i18n="a1">煙感告警 ×4</span></div><div class="t2">3F 東區走廊</div></div><span class="tm">10:24</span></div>
+      <div class="al-item" style="--ac:#EF4444"><div class="ic" style="background:rgba(239,68,68,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#FF6B61" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></div><div><div class="t1">Fortune Court · <span data-i18n="a2">噴淋泵故障</span></div><div class="t2">B1 水泵房</div></div><span class="tm">10:12</span></div>
+      <div class="al-item" style="--ac:#F59E0B"><div class="ic" style="background:rgba(245,158,11,.15)"><svg viewBox="0 0 24 24" fill="none" stroke="#FFB224" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div><div><div class="t1">Lion Rock Tower · <span data-i18n="a3">水壓偏低</span></div><div class="t2">12F 管井</div></div><span class="tm">09:48</span></div>
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-8 4 16 3-8h6"/></svg><span data-i18n="p.trend">健康度趨勢</span></h4>
+      <div class="chart-box" style="padding:10px 12px">
+        <div class="chart-div" id="dashHealth"></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim)"><span data-i18n="p.t12">近 12 月</span><span id="dhDelta"></span></div>
+      </div>
+      <h4><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></svg><span data-i18n="p.metric">核心指標</span></h4>
+      <div class="prog"><div class="pr"><span data-i18n="hud.risk">告警風險</span><b style="color:#FFB224" id="pr1v">0</b></div><div class="bar"><i id="pr1" style="background:linear-gradient(90deg,#F59E0B,#FFB224)"></i></div></div>
+      <div class="prog"><div class="pr"><span data-i18n="hud.insp">巡檢合規</span><b style="color:#7CC4FF" id="pr2v">0%</b></div><div class="bar"><i id="pr2" style="background:linear-gradient(90deg,#0EA5E9,#38BDF8)"></i></div></div>
+      <div class="prog"><div class="pr"><span data-i18n="hud.rect">整改完成</span><b style="color:#7CC4FF" id="pr3v">0%</b></div><div class="bar"><i id="pr3" style="background:linear-gradient(90deg,#0EA5E9,#38BDF8)"></i></div></div>
+    </section>
+
+    <div class="dock glass">
+      <div class="li"><span class="d" style="background:#38BDF8"></span><span data-i18n="d.n">正常</span></div>
+      <div class="li"><span class="d" style="background:#F59E0B"></span><span data-i18n="d.r">風險</span></div>
+      <div class="li"><span class="d" style="background:#EF4444"></span><span data-i18n="d.a">告警</span></div>
+      <div class="vsep"></div>
+      <div class="hint" data-i18n="d.hint">拖動地圖 · 點擊標記聚焦</div>
+      <button id="resetView" data-i18n="d.back">返回全景</button>
+    </div>
+
+    <div id="bcard" class="glass brackets">
+      <div class="hn"><span id="bcName">—</span><span class="tag" id="bcTag">—</span></div>
+      <div class="hsub" id="bcSub">—</div>
+      <div class="hdiv"></div>
+      <div style="font-size:10px;color:var(--dim);letter-spacing:1.5px" data-i18n="bc.score">安全綜合評分</div>
+      <div class="score-r"><span class="score-n" id="bcScore">0</span><span class="score-t" id="bcLevel">—</span></div>
+      <div class="sbar"><i id="bcBar"></i></div>
+      <svg id="bcTrend" viewBox="0 0 260 56" width="100%" style="margin-top:10px"></svg>
+      <div class="grid4">
+        <div class="g4"><div class="gl" data-i18n="bc.dev">設備總數</div><div class="gv" id="bcDev">—</div></div>
+        <div class="g4"><div class="gl" data-i18n="bc.alm">告警設備</div><div class="gv" style="color:#FF6B61" id="bcAlm">—</div></div>
+        <div class="g4"><div class="gl" data-i18n="bc.insp">巡檢完成</div><div class="gv" style="color:#7CC4FF" id="bcInsp">—</div></div>
+        <div class="g4"><div class="gl" data-i18n="bc.flt">故障設備</div><div class="gv" style="color:#FFB224" id="bcFlt">—</div></div>
+      </div>
+      <button class="enter" id="bcEnter" data-i18n="bc.enter">進入樓宇 ➔</button>
+      <button class="ghostbtn" id="bcClose" data-i18n="bc.close">收起</button>
+    </div>
+
+    <footer><b>Junkay Cloud AIoT Fire Safety Platform</b><br>Century Harvest Technologies Limited</footer>
+    <div class="f-r">+852 3500-1234 · support@junkaycloud.com<br><b style="color:#FFB224">24/7 Hotline: +852 3500-9999</b> · www.junkaycloud.com</div>
+  </div>
+
+  <!-- ============ SUB PAGES ============ -->
+  <div class="page glass" id="page-monitor">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="m.t">設備監控</b></div><span data-i18n="m.t">設備監控</span><span class="sub">DEVICE MONITORING</span></h2>
+      <div class="ph-actions">
+        <div class="searchbox"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="monSearch" placeholder="搜索設備 / 樓宇"></div>
+        <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg><span data-i18n="m.export">導出</span></button>
+      </div>
+    </div>
+    <div class="sumgrid g4" id="monStats"></div>
+    <div class="ptabs" id="monTabs"></div>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)" id="monGrid"></div>
+  </div>
+
+  <div class="page glass" id="page-alerts">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21a2 2 0 0 0 4 0"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="al.t">警報中心</b></div><span data-i18n="al.t">警報中心</span><span class="sub">ALERT CENTER</span></h2>
+      <div class="ph-actions">
+        <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z"/><path d="M21 3v6h-6"/></svg><span data-i18n="al.refresh">刷新</span></button>
+        <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span data-i18n="al.ack">全部確認</span></button>
+      </div>
+    </div>
+    <div class="sumgrid g4" id="alStats"></div>
+    <div class="ptabs" id="alTabs"></div>
+    <div class="dtable">
+      <div class="thead" id="alThead"></div>
+      <div id="alList"></div>
+    </div>
+  </div>
+
+  <div class="page glass" id="page-maint">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.5-.6-.6-2.5 2.5-2.3z"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="mt.t">維護工單</b></div><span data-i18n="mt.t">維護工單</span><span class="sub">MAINTENANCE ORDERS</span></h2>
+      <div class="ph-actions"><button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="mt.new">新建工單</span></button></div>
+    </div>
+    <div class="sumgrid g4" id="mtStats"></div>
+    <div class="dtable">
+      <div class="thead" id="mtThead"></div>
+      <div id="mtList"></div>
+    </div>
+  </div>
+
+  <div class="page glass" id="page-analytics">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M18 17V9M13 17V5M8 17v-3"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="an.t">數據分析</b></div><span data-i18n="an.t">數據分析</span><span class="sub">ANALYTICS</span></h2>
+      <div class="ph-actions"><div class="ptabs" style="margin:0" id="anRange"></div></div>
+    </div>
+    <div class="sumgrid g4" id="anStats"></div>
+    <div class="cards" style="grid-template-columns:1.4fr 1fr">
+      <div class="chart-box"><div class="ct" data-i18n="an.c1">告警趨勢（近 7 日）</div><div class="cs">ALERT TREND · 7D</div><div class="echart" id="anLine"></div></div>
+      <div class="chart-box"><div class="ct" data-i18n="an.c2">設備狀態分佈</div><div class="cs">DEVICE STATUS</div><div class="echart" id="anDonut"></div></div>
+    </div>
+    <div class="chart-box" style="margin-top:14px"><div class="ct" data-i18n="an.c3">樓宇安全評分</div><div class="cs">BUILDING SCORES</div><div class="echart" id="anBars"></div></div>
+    <div class="chart-box" style="margin-top:14px">
+      <div class="ct" data-i18n="an.c4">健康度歷史趨勢（近 12 月）</div><div class="cs">HEALTH TREND · 12M</div>
+      <div class="ptabs" style="margin:2px 0 8px" id="htTabs"></div>
+      <div class="echart tall" id="anHealth"></div>
+    </div>
+  </div>
+
+  <div class="page glass" id="page-reports">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="rp.t">報告中心</b></div><span data-i18n="rp.t">報告中心</span><span class="sub">REPORTS</span></h2>
+      <div class="ph-actions"><button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="rp.new">生成報告</span></button></div>
+    </div>
+    <div class="ptabs" id="rpTabs"></div>
+    <div class="cards" style="grid-template-columns:repeat(4,1fr)" id="rpGrid"></div>
+  </div>
+
+  <div class="page glass" id="page-more">
+    <div class="page-head">
+      <div class="pt-ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="19" cy="12" r="3"/><circle cx="5" cy="12" r="3"/></svg></div>
+      <h2><div class="breadcrumb"><span data-i18n="nav.dash">大屏</span> / <b data-i18n="mo.t">更多</b></div><span data-i18n="mo.t">更多</span><span class="sub">MORE</span></h2>
+    </div>
+    <div class="sec-label" data-i18n="mo.sys">系統管理 · SYSTEM</div>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)" id="moGrid"></div>
+    <div class="sec-label" style="margin-top:22px" data-i18n="mo.about">關於 · ABOUT</div>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)" id="moGrid2"></div>
+  </div>
+
+  <!-- ============ TOP NAV ============ -->
+  <nav id="topnav">
+    <div class="brand">
+      <div class="lg"><svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 4-4 5-4 9a4 4 0 0 0 8 0c0-1.5-.5-2.5-1-3.5-.8 1-1.5 1.5-1.5 1.5C14 7 13 4 12 2z"/></svg></div>
+      <div><div class="b1">Omini OS</div><div class="b2">Intelligent Building Operations</div></div>
+    </div>
+    <div class="nav" id="nav">
+      <div class="nitem on" data-view="dash" data-i18n="nav.dash">大屏</div>
+      <div class="nitem" data-view="monitor" data-i18n="nav.mon">監控</div>
+      <div class="nitem" data-view="alerts" data-i18n="nav.al">警報</div>
+      <div class="nitem" data-view="maint" data-i18n="nav.mt">維護</div>
+      <div class="nitem" data-view="analytics" data-i18n="nav.an">分析</div>
+      <div class="nitem" data-view="reports" data-i18n="nav.rp">報告</div>
+      <div class="nitem" data-view="more" data-i18n="nav.more">更多</div>
+    </div>
+    <div class="nctl">
+      <button class="ctl-btn" id="themeBtn" title="Theme">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button class="ctl-btn lang-btn" id="langBtn">EN</button>
+      <div class="user-chip" id="userChip">
+        <div class="av">R</div><span class="un">Admin</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>
+        <div class="udrop glass" id="udrop">
+          <div class="uhd"><div class="n">Admin · CONSOLE</div><div class="e">rscwong@qq.com</div></div>
+          <div class="ui"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg><span data-i18n="u.p">個人資料</span></div>
+          <div class="ui"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span data-i18n="u.s">帳號設定</span></div>
+          <div class="ui danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span data-i18n="u.o">退出登入</span></div>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<!-- Tencent Maps GL JS — WorkBuddy key-proxy mode -->
+<script type="text/javascript">
+  window._TMapSecurityConfig = { serviceHost: 'http://127.0.0.1:__WB_HTTP_PORT__/_TMapService/_wbt/__WB_TMAP_SECRET__' };
+</script>
+<script src="https://map.qq.com/api/gljs?v=1.exp"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script>
+/* ============ i18n ============ */
+const I18N = {
+  zh:{'nav.dash':'大屏','nav.mon':'監控','nav.al':'警報','nav.mt':'維護','nav.an':'分析','nav.rp':'報告','nav.more':'更多',
+    'hud.risk':'告警風險','hud.insp':'巡檢合規','hud.rect':'整改完成',
+    'core.bld':'總樓宇','core.dev':'在線設備','core.online':'設備在線率','core.health':'健康度總分','core.alarm':'今日告警',
+    'p.ov':'園區概覽','p.bld':'樓宇','p.dev':'在線設備','p.alm':'告警樓宇','p.rsk':'風險樓宇','p.list':'樓宇狀態',
+    'p.alert':'實時告警','p.metric':'核心指標','p.trend':'健康度趨勢','p.t12':'近 12 月','a1':'煙感告警 ×4','a2':'噴淋泵故障','a3':'水壓偏低',
+    'd.n':'正常','d.r':'風險','d.a':'告警','d.hint':'拖動地圖 · 點擊標記聚焦','d.back':'返回全景',
+    'bc.score':'安全綜合評分','bc.dev':'設備總數','bc.alm':'告警設備','bc.insp':'巡檢完成','bc.flt':'故障設備','bc.enter':'進入樓宇 ➔','bc.close':'收起',
+    'm.t':'設備監控','m.export':'導出','m.search':'搜索設備 / 樓宇',
+    'al.t':'警報中心','al.refresh':'刷新','al.ack':'全部確認',
+    'mt.t':'維護工單','mt.new':'新建工單',
+    'an.t':'數據分析','an.c1':'告警趨勢（近 7 日）','an.c2':'設備狀態分佈','an.c3':'樓宇安全評分','an.c4':'健康度歷史趨勢（近 12 月）',
+    'rp.t':'報告中心','rp.new':'生成報告','rp.dl':'下載報告','rp.view':'預覽',
+    'mo.t':'更多','mo.sys':'系統管理 · SYSTEM','mo.about':'關於 · ABOUT',
+    'sum.online':'在線設備','sum.offline':'離線設備','sum.alarm':'告警設備','sum.insp':'巡檢覆蓋率',
+    'sum.pending':'待處理','sum.progress':'進行中','sum.accept':'待驗收','sum.done':'已完成',
+    'sum.total':'告警總數','sum.new':'今日新增','sum.resp':'平均響應','sum.resolved':'已解決',
+    'sum.abld':'告警樓宇','sum.rsk':'風險樓宇','sum.onrate':'在線率','sum.havg':'健康度均值',
+    'u.p':'個人資料','u.s':'帳號設定','u.o':'退出登入'},
+  en:{'nav.dash':'Dashboard','nav.mon':'Monitor','nav.al':'Alerts','nav.mt':'Maintain','nav.an':'Analytics','nav.rp':'Reports','nav.more':'More',
+    'hud.risk':'Risk Index','hud.insp':'Inspection','hud.rect':'Rectified',
+    'core.bld':'Buildings','core.dev':'Devices','core.online':'Online Rate','core.health':'Health Score','core.alarm':'Today Alarms',
+    'p.ov':'Overview','p.bld':'Buildings','p.dev':'Devices','p.alm':'Alarm Bldgs','p.rsk':'Risk Bldgs','p.list':'Buildings',
+    'p.alert':'Live Alerts','p.metric':'Metrics','p.trend':'Health Trend','p.t12':'Last 12M','a1':'Smoke alarm ×4','a2':'Sprinkler pump fault','a3':'Low water pressure',
+    'd.n':'Normal','d.r':'Risk','d.a':'Alarm','d.hint':'Drag map · Click marker to focus','d.back':'Overview',
+    'bc.score':'SAFETY SCORE','bc.dev':'Devices','bc.alm':'Alarming','bc.insp':'Inspected','bc.flt':'Faulty','bc.enter':'Enter ➔','bc.close':'Close',
+    'm.t':'Device Monitoring','m.export':'Export','m.search':'Search device / building',
+    'al.t':'Alert Center','al.refresh':'Refresh','al.ack':'Acknowledge All',
+    'mt.t':'Maintenance Orders','mt.new':'New Order',
+    'an.t':'Analytics','an.c1':'Alert Trend (7D)','an.c2':'Device Status','an.c3':'Building Scores','an.c4':'Health Trend (12M)',
+    'rp.t':'Reports','rp.new':'Generate','rp.dl':'Download','rp.view':'Preview',
+    'mo.t':'More','mo.sys':'SYSTEM','mo.about':'ABOUT',
+    'sum.online':'Online Devices','sum.offline':'Offline','sum.alarm':'Alarming','sum.insp':'Inspection Rate',
+    'sum.pending':'Pending','sum.progress':'In Progress','sum.accept':'Awaiting','sum.done':'Done',
+    'sum.total':'Total Alerts','sum.new':'New Today','sum.resp':'Avg Response','sum.resolved':'Resolved',
+    'sum.abld':'Alarm Bldgs','sum.rsk':'Risk Bldgs','sum.onrate':'Online Rate','sum.havg':'Avg Health',
+    'u.p':'Profile','u.s':'Account Settings','u.o':'Sign Out'}
+};
+let LANG='zh';
+const langBtn=document.getElementById('langBtn');
+function applyLang(){ document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=I18N[LANG][el.dataset.i18n]; if(v!=null) el.textContent=v; });
+  langBtn.textContent = LANG==='zh'?'EN':'繁中'; }
+
+const themeBtn=document.getElementById('themeBtn');
+themeBtn.onclick=()=>{ const h=document.documentElement; h.dataset.theme=h.dataset.theme==='dark'?'light':'dark'; };
+const userChip=document.getElementById('userChip'), udrop=document.getElementById('udrop');
+userChip.addEventListener('click',e=>{ e.stopPropagation(); udrop.classList.toggle('open'); });
+addEventListener('click',()=> udrop.classList.remove('open'));
+
+const au1=document.getElementById('au1'), au2=document.getElementById('au2');
+addEventListener('mousemove',e=>{ const x=(e.clientX/innerWidth-.5), y=(e.clientY/innerHeight-.5);
+  au1.style.transform=`translate(${x*34}px,${y*22}px)`; au2.style.transform=`translate(${-x*26}px,${-y*18}px)`; });
+
+/* ============ data ============ */
+const CSS_C={normal:'#38BDF8',risk:'#F59E0B',alarm:'#EF4444'};
+function genStats(st){
+  if(st==='alarm') return {score:+(55+Math.random()*13).toFixed(1),dev:180+~~(Math.random()*220),alm:2+~~(Math.random()*4),flt:3+~~(Math.random()*5),insp:74+~~(Math.random()*10)};
+  if(st==='risk')  return {score:+(72+Math.random()*12).toFixed(1),dev:140+~~(Math.random()*200),alm:~~(Math.random()*2),flt:1+~~(Math.random()*4),insp:84+~~(Math.random()*8)};
+  return {score:+(88+Math.random()*10).toFixed(1),dev:120+~~(Math.random()*220),alm:0,flt:~~(Math.random()*2),insp:92+~~(Math.random()*7)};
+}
+const BDEF=[
+  ['Harbour Tower','維港大廈','alarm',{score:68.4,dev:326,alm:4,flt:7,insp:82},22.3193,114.1694],
+  ['Kowloon Commerce','九龍商貿中心','risk',null,22.3225,114.1730],
+  ['Pearl Residences','明珠苑','normal',null,22.3160,114.1658],
+  ['Harbourfront Plaza','海濱廣場','normal',null,22.3152,114.1730],
+  ['Lion Rock Tower','獅子山大廈','risk',null,22.3238,114.1660],
+  ['Metro Hub','港鐵樞紐中心','normal',null,22.3175,114.1760],
+  ['Skyline One','天際一號','normal',null,22.3138,114.1695],
+  ['Fortune Court','富臨閣','alarm',null,22.3210,114.1618],
+  ['Jade Garden','翡翠園','normal',null,22.3252,114.1705],
+  ['Dragon Centre','龍騰中心','risk',null,22.4612,113.9986],
+  ['Harbour View','觀海軒','normal',null,22.4600,114.0008],
+  ['Star House','星光行','normal',null,22.3030,114.2590],
+];
+const BD=BDEF.map((d,i)=>({id:i,name:d[0],cn:d[1],status:d[2],stats:d[3]||genStats(d[2]),lat:d[4],lng:d[5]}));
+function trendFor(b){
+  const s=b.stats.score, seed=b.id*7+13, arr=[]; let v=s-6-(seed%5);
+  for(let i=0;i<12;i++){ v=v+(s-v)*0.4+Math.sin(seed+i*1.7)*2.4; arr.push(Math.max(20,Math.min(100,Math.round(v*10)/10))); }
+  arr[11]=s; return arr;
+}
+BD.forEach(b=> b.trend=trendFor(b));
+const OVERALL_TREND=BD[0].trend.map((_,m)=>Math.round(BD.reduce((s,b)=>s+b.trend[m],0)/BD.length*10)/10);
+const TOT_DEV=BD.reduce((s,b)=>s+b.stats.dev,0);
+const TOT_ALM=BD.reduce((s,b)=>s+b.stats.alm,0);
+const TOT_FLT=BD.reduce((s,b)=>s+b.stats.flt,0);
+const AVG_HEALTH=+(OVERALL_TREND[11]).toFixed(1);
+const ON_RATE=Math.round((1-TOT_FLT/(TOT_DEV+TOT_FLT))*100);
+
+const ovB=document.getElementById('ovB'),ovD=document.getElementById('ovD'),ovA=document.getElementById('ovA'),ovR=document.getElementById('ovR');
+const blist=document.getElementById('blist');
+ovB.textContent=BD.length;
+ovD.textContent=TOT_DEV.toLocaleString();
+ovA.textContent=BD.filter(b=>b.status==='alarm').length;
+ovR.textContent=BD.filter(b=>b.status==='risk').length;
+function renderBlist(){
+  blist.innerHTML=[...BD].sort((a,b)=>a.stats.score-b.stats.score).slice(0,7).map(b=>
+    `<div class="brow" data-id="${b.id}"><span class="sd" style="background:${CSS_C[b.status]};color:${CSS_C[b.status]};box-shadow:0 0 6px ${CSS_C[b.status]}"></span>
+     <span class="bn">${b.cn}<small>${b.name.toUpperCase()}</small></span>
+     <span class="bs" style="color:${CSS_C[b.status]}">${b.stats.score}<small>SCORE</small></span></div>`).join('');
+}
+renderBlist();
+const alCountHint=document.getElementById('alCountHint'); alCountHint.textContent='3 ACTIVE';
+const ovScoreHint=document.getElementById('ovScoreHint'); ovScoreHint.textContent='AVG '+AVG_HEALTH;
+
+/* central core metrics */
+const coreB=document.getElementById('coreB'),coreD=document.getElementById('coreD'),coreO=document.getElementById('coreO'),coreH=document.getElementById('coreH'),coreA=document.getElementById('coreA');
+function countTo(el,target,suf){ const t0=performance.now(); (function s(t){ const k=Math.min((t-t0)/1500,1),e=1-Math.pow(1-k,3);
+  el.textContent=Math.round(target*e)+suf; if(k<1) requestAnimationFrame(s); })(t0); }
+countTo(coreB,BD.length,'');
+countTo(coreD,TOT_DEV,'');
+countTo(coreO,ON_RATE,'%');
+countTo(coreH,AVG_HEALTH,'');
+countTo(coreA,TOT_ALM,'');
+
+/* progress-bar tickers (right panel) */
+setTimeout(()=>{
+  [['pr1','pr1v',89,''],['pr2','pr2v',91,'%'],['pr3','pr3v',93,'%']].forEach(([b,v,val,suf],i)=>{
+    setTimeout(()=>{ document.getElementById(b).style.width=val+'%';
+      const el=document.getElementById(v),t0=performance.now();
+      (function s(t){const k=Math.min((t-t0)/1600,1),e=1-Math.pow(1-k,3);
+        el.textContent=Math.round(val*e)+suf; if(k<1) requestAnimationFrame(s);})(t0); },500+i*150); });
+},600);
+
+/* ============ building detail card ============ */
+const LVL=s=>s>=88?['優秀','#38BDF8']:s>=75?['良好','#5aa9ff']:s>=65?['偏低','#F59E0B']:['高風險','#EF4444'];
+const bcard=document.getElementById('bcard'),bcName=document.getElementById('bcName'),bcSub=document.getElementById('bcSub'),bcTag=document.getElementById('bcTag'),
+  bcScore=document.getElementById('bcScore'),bcLevel=document.getElementById('bcLevel'),bcBar=document.getElementById('bcBar'),
+  bcTrend=document.getElementById('bcTrend'),bcDev=document.getElementById('bcDev'),bcAlm=document.getElementById('bcAlm'),
+  bcInsp=document.getElementById('bcInsp'),bcFlt=document.getElementById('bcFlt'),bcClose=document.getElementById('bcClose'),bcEnter=document.getElementById('bcEnter');
+function showBcard(b){
+  const s=b.stats,[lv,lc]=LVL(s.score);
+  bcName.textContent=b.cn+' '+b.name;
+  bcSub.textContent=b.status==='alarm'?(LANG==='zh'?'ALARM · 需立即處置':'ALARM · Action required'):b.status==='risk'?(LANG==='zh'?'RISK · 持續關注':'RISK · Watch'):(LANG==='zh'?'NORMAL · 運行正常':'NORMAL · Healthy');
+  bcTag.textContent=b.status.toUpperCase(); bcTag.className='tag '+(b.status==='alarm'?'rd':b.status==='risk'?'am':'bl');
+  bcScore.textContent=s.score; bcScore.style.color=lc;
+  bcLevel.textContent=lv; bcLevel.style.color=lc; bcLevel.style.background=lc+'1F';
+  bcBar.style.width=s.score+'%'; bcBar.style.background=lc;
+  bcDev.textContent=s.dev; bcAlm.textContent=s.alm; bcInsp.textContent=s.insp+'%'; bcFlt.textContent=s.flt;
+  const tr=b.trend,mn=Math.min(...tr)-6,mx=Math.max(...tr)+6,W=260,H=56,P=4;
+  const X=i=>P+i*(W-2*P)/(tr.length-1), Y=v=>H-P-(v-mn)/(mx-mn)*(H-2*P);
+  const pts=tr.map((v,i)=>[X(i),Y(v)]); const d='M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L');
+  bcTrend.innerHTML=`<path d="${d} L${X(11)} ${H-P} L${P} ${H-P} Z" fill="${lc}" fill-opacity=".12"/>
+    <path d="${d}" fill="none" stroke="${lc}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${pts[11][0]}" cy="${pts[11][1]}" r="3" fill="${lc}"/>`;
+  bcard.classList.add('show');
+}
+bcClose.onclick=()=> bcard.classList.remove('show');
+let focusB=null;
+bcEnter.onclick=()=>{ if(focusB!=null) openMonitor(focusB); };
+
+/* ============ Tencent map + markers ============ */
+let map=null, markerOverlays=[];
+const mapFallback=document.getElementById('mapFallback');
+function markerHTML(b){
+  const st=b.status;
+  return `<div class="bpin${st==='alarm'?' alarm':''}"><span class="wave"></span><span class="wave w2"></span><span class="core"></span></div>
+    <div class="mtip">${b.cn} ${b.name}<small>${st.toUpperCase()} · SCORE ${b.stats.score}</small></div>`;
+}
+function dotColor(b){ return b.stats.score>=88 ? '#22C55E' : CSS_C[b.status]; }
+function markerScale(z){ return Math.max(.7, Math.min(1.9, (z-11)*.28+1)); }
+let markerEls=[];
+function addMarkers(){
+  const layer=document.createElement('div');
+  layer.id='markerLayer';
+  layer.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;z-index:5;pointer-events:none';
+  document.getElementById('scene').appendChild(layer);
+  BD.forEach(b=>{
+    const el=document.createElement('div');
+    el.className='beacon'; el.style.color=dotColor(b); el.style.pointerEvents='auto';
+    el.innerHTML=markerHTML(b);
+    el.querySelector('.bpin').addEventListener('click',e=>{ e.stopPropagation(); flyToBuilding(b); });
+    layer.appendChild(el);
+    markerEls.push({el,b});
+  });
+  (function positionLoop(){
+    if(map && typeof map.projectToContainer==='function'){
+      const s=markerScale(map.getZoom());
+      markerEls.forEach(o=>{
+        let p; try{ p=map.projectToContainer(new TMap.LatLng(o.b.lat,o.b.lng)); }catch(e){ return; }
+        if(!p) return;
+        const x=(p.x!=null?p.x:(p.getX?p.getX():0)), y=(p.y!=null?p.y:(p.getY?p.getY():0));
+        o.el.style.transform='translate('+x+'px,'+y+'px) scale('+s+')';
+      });
+    }
+    requestAnimationFrame(positionLoop);
+  })();
+}
+const HK_VIEW={lat:22.352,lng:114.15,zoom:10.8,pitch:52};
+function camTween(goal,dur){
+  if(!map) return;
+  const c0=map.getCenter(), z0=map.getZoom(), p0=map.getPitch?map.getPitch():0;
+  const t0=performance.now();
+  (function s(t){ const k=Math.min((t-t0)/dur,1), e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+    try{
+      map.setCenter(new TMap.LatLng(c0.lat+(goal.lat-c0.lat)*e, c0.lng+(goal.lng-c0.lng)*e));
+      map.setZoom(z0+(goal.zoom-z0)*e);
+      map.setPitch(p0+(goal.pitch-p0)*e);
+    }catch(err){}
+    if(k<1) requestAnimationFrame(s);
+  })(t0);
+}
+const resetView=document.getElementById('resetView');
+function flyToBuilding(b){
+  focusB=b; camTween({lat:b.lat,lng:b.lng,zoom:16.2,pitch:60},1400);
+  showBcard(b); resetView.style.display='block';
+}
+resetView.onclick=()=>{ focusB=null; bcard.classList.remove('show');
+  camTween(HK_VIEW,1300); resetView.style.display='none'; };
+blist.addEventListener('click',e=>{ const row=e.target.closest('.brow'); if(!row)return;
+  const b=BD.find(x=>x.id==row.dataset.id); if(!b)return;
+  if(map) flyToBuilding(b); else showBcard(b); });
+
+function renderFallbackMarkers(){
+  const LAT0=22.28,LAT1=22.48,LNG0=113.95,LNG1=114.30;
+  const layer=document.getElementById('fbLayer'); if(!layer||layer.children.length) return;
+  BD.forEach(b=>{
+    const x=Math.min(96,Math.max(4,(b.lng-LNG0)/(LNG1-LNG0)*100));
+    const y=Math.min(94,Math.max(8,(LAT1-b.lat)/(LAT1-LAT0)*100));
+    const el=document.createElement('div');
+    el.className='beacon'; el.style.left=x+'%'; el.style.top=y+'%'; el.style.color=dotColor(b);
+    el.innerHTML=markerHTML(b);
+    el.querySelector('.bpin').addEventListener('click',()=>showBcard(b));
+    layer.appendChild(el);
+  });
+}
+function initMap(){
+  if(map) return;
+  if(typeof TMap==='undefined'){ mapFallback.style.display='block'; renderFallbackMarkers(); return; }
+  try{
+    map=new TMap.Map('map',{ 
+      center:new TMap.LatLng(HK_VIEW.lat,HK_VIEW.lng), 
+      zoom:HK_VIEW.zoom,
+      viewMode:'3D', 
+      pitch:HK_VIEW.pitch, 
+      rotation:0, 
+      features:['base','building3d','landcover'],
+      baseMap: {
+        type: 'vector',
+        features: ['base', 'building2d'] // 仅渲染基础底图和建筑， omit 'label' 和 'road'
+      }
+    });
+    ['ZOOM','SCALE','ROTATION','LOGO','COPYRIGHT'].forEach(k=>{ try{ map.removeControl(TMap.constants.DEFAULT_CONTROL_ID[k]); }catch(e){} });
+    addMarkers();
+  }catch(e){ mapFallback.style.display='block'; renderFallbackMarkers(); }
+}
+if(typeof TMap!=='undefined') initMap();
+else setTimeout(initMap, 500);
+setTimeout(()=>{ if(!map && !document.querySelector('#fbLayer .beacon')){ mapFallback.style.display='block'; renderFallbackMarkers(); } }, 2000);
+
+/* ============ ECharts ============ */
+const TCOL='#38BDF8', RCOL='#EF4444', YCOL='#7CC4FF', TXC='#8A94A8', MONTHS=['1','2','3','4','5','6','7','8','9','10','11','12'];
+const charts=[];
+function regChart(el){ const c=echarts.init(el); charts.push(c); return c; }
+function areaOpt(data,color,xdata){ return {
+  grid:{left:6,right:6,top:10,bottom:4,containLabel:true},
+  xAxis:{type:'category',data:xdata||MONTHS,boundaryGap:false,axisLine:{lineStyle:{color:'rgba(128,140,160,.2)'}},axisLabel:{color:TXC,fontSize:10}},
+  yAxis:{type:'value',splitLine:{lineStyle:{color:'rgba(128,140,160,.12)'}},axisLabel:{color:TXC,fontSize:10}},
+  series:[{type:'line',data,smooth:true,symbol:'none',lineStyle:{color,width:2},
+    areaStyle:{color:new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:color+'55'},{offset:1,color:color+'00'}])}}]}; }
+let htSel='all', anHealth=null;
+function initCharts(){
+  if(typeof echarts==='undefined') return;
+  const dh=regChart(document.getElementById('dashHealth'));
+  dh.setOption(areaOpt(OVERALL_TREND,TCOL));
+  const delta=OVERALL_TREND[11]-OVERALL_TREND[10];
+  document.getElementById('dhDelta').textContent=(delta>=0?'+':'')+delta.toFixed(1)+' MoM';
+  document.getElementById('dhDelta').style.color=delta>=0?'#34D399':'#FF6B61';
+  const anLine=regChart(document.getElementById('anLine'));
+  anLine.setOption(areaOpt([12,9,14,7,6,10,5],TCOL,['一','二','三','四','五','六','日']));
+  const anDonut=regChart(document.getElementById('anDonut'));
+  anDonut.setOption({tooltip:{show:false},legend:{show:false},
+    series:[{type:'pie',radius:['62%','82%'],center:['50%','50%'],label:{color:TXC,fontSize:10},labelLine:{lineStyle:{color:'rgba(128,140,160,.3)'}},
+      data:[{name:'正常',value:78,itemStyle:{color:TCOL}},{name:'風險',value:14,itemStyle:{color:'#F59E0B'}},{name:'告警',value:8,itemStyle:{color:RCOL}}]}]});
+  const top=[...BD].sort((a,b)=>b.stats.score-a.stats.score).slice(0,10);
+  const anBars=regChart(document.getElementById('anBars'));
+  anBars.setOption({grid:{left:6,right:6,top:22,bottom:4,containLabel:true},
+    xAxis:{type:'category',data:top.map(b=>b.cn),axisLabel:{color:TXC,fontSize:10,interval:0},axisLine:{lineStyle:{color:'rgba(128,140,160,.2)'}}},
+    yAxis:{type:'value',max:100,splitLine:{lineStyle:{color:'rgba(128,140,160,.12)'}},axisLabel:{color:TXC,fontSize:10}},
+    series:[{type:'bar',data:top.map(b=>({value:b.stats.score,itemStyle:{color:CSS_C[b.status],borderRadius:[6,6,0,0]}})),barWidth:26,
+      label:{show:true,position:'top',color:'#8A94A8',fontSize:10}}]});
+  anHealth=regChart(document.getElementById('anHealth'));
+  renderHealth();
+}
+const htTabs=document.getElementById('htTabs');
+function renderHealth(){
+  htTabs.innerHTML=[['all',LANG==='zh'?'園區整體':'Overall']].concat(BD.slice(0,6).map(b=>[b.id,b.cn]))
+    .map(t=>`<div class="ptab ${String(htSel)===String(t[0])?'on':''}" data-f="${t[0]}">${t[1]}</div>`).join('');
+  let series,color;
+  if(htSel==='all'){ series=OVERALL_TREND; color=TCOL; }
+  else{ const b=BD.find(x=>String(x.id)===String(htSel)); series=b.trend; color=CSS_C[b.status]; }
+  if(anHealth) anHealth.setOption(areaOpt(series,color));
+}
+htTabs.addEventListener('click',e=>{ const t=e.target.closest('.ptab'); if(t){ htSel=t.dataset.f; renderHealth(); } });
+initCharts();
+
+/* ============ router ============ */
+const nav=document.getElementById('nav');
+function switchView(v){
+  document.querySelectorAll('.nitem').forEach(n=>n.classList.toggle('on',n.dataset.view===v));
+  document.getElementById('view-dash').classList.toggle('on',v==='dash');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  if(v!=='dash'){ const pg=document.getElementById('page-'+v); if(pg) pg.classList.add('on'); }
+  setTimeout(()=>charts.forEach(c=>c.resize()),60);
+}
+nav.addEventListener('click',e=>{ const it=e.target.closest('.nitem'); if(it) switchView(it.dataset.view); });
+
+/* ============ generic summary card helper ============ */
+function sumCard(color,icon,val,sub,label,foot){
+  return `<div class="sum" style="--sc:${color}"><div class="sh"><span class="si" style="color:${color}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${icon}"/></svg></span>${label}</div>
+    <div class="sv">${val}<small>${sub}</small></div>${foot?`<div class="sf">${foot}</div>`:''}</div>`;
+}
+
+/* ============ monitor page ============ */
+const DEV_TYPES=[['煙感探測器','SMOKE','M8 12a4 4 0 1 1 8 0c0 3-2 4-2 6H10c0-2-2-3-2-6zM11 20h2'],['溫感探測器','HEAT','M12 3v10M12 13a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'],['噴淋泵','PUMP','M12 3c3 5 6 8 6 11a6 6 0 1 1-12 0c0-3 3-6 6-11z'],['水壓傳感器','PRESSURE','M4 12h4l2-5 4 10 2-5h4'],['電氣火災監控','ELECTRIC','M13 2 4 14h6l-1 8 9-12h-6l1-8z'],['消防廣播','BROADCAST','M11 5 6 9H3v6h3l5 4V5zM15 9a4 4 0 0 1 0 6']];
+let monFilter='all';
+const monTabs=document.getElementById('monTabs'),monGrid=document.getElementById('monGrid'),monStats=document.getElementById('monStats');
+function openMonitor(bid){ switchView('monitor'); renderMonitor(bid); }
+function renderMonitor(bid){
+  monFilter=bid==null?'all':bid;
+  const tabs=[['all',LANG==='zh'?'全部樓宇':'All']].concat(BD.map(b=>[b.id,b.cn]));
+  monTabs.innerHTML=tabs.map(t=>`<div class="ptab ${String(monFilter)===String(t[0])?'on':''}" data-f="${t[0]}">${t[1]}</div>`).join('');
+  monStats.innerHTML=
+    sumCard('#34D399','M5 12h14M12 5l7 7-7 7',TOT_DEV,'',LANG==='zh'?'在線設備':'Online Devices')+
+    sumCard('#8A94A8','M5 12h14M12 5l-7 7 7 7','3','',LANG==='zh'?'離線設備':'Offline')+
+    sumCard('#EF4444','M12 3 2 20h20L12 3zM12 10v4M12 17.5v.5',TOT_ALM,'',LANG==='zh'?'告警設備':'Alarming')+
+    sumCard('#38BDF8','M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',Math.round(BD.reduce((s,b)=>s+b.stats.insp,0)/BD.length)+'%','',LANG==='zh'?'巡檢覆蓋率':'Inspection Rate');
+  const list=(monFilter==='all'?BD:BD.filter(b=>String(b.id)===String(monFilter)));
+  let html='';
+  list.forEach(b=>{ DEV_TYPES.forEach((dt,di)=>{
+    const st=b.status==='alarm'&&di<2?'alarm':b.status==='risk'&&di===3?'risk':'normal';
+    const val=st==='alarm'?(1+~~(Math.random()*3))+'' :st==='risk'?'1':'OK';
+    html+=`<div class="dev-card" style="--dc:${CSS_C[st]}"><div class="dh"><div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="${CSS_C[st]}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${dt[2]}"/></svg></div>
+      <div class="dt">${dt[0]}<small>${b.cn} · ${dt[1]}</small></div><span class="tag ${st==='alarm'?'rd':st==='risk'?'am':'gn'}">${st.toUpperCase()}</span></div>
+      <div class="dv"><span>${LANG==='zh'?'告警':'Alarm'}</span><b style="color:${CSS_C[st]}">${val}</b><span>${LANG==='zh'?'巡檢':'Insp.'}</span><b>${b.stats.insp}%</b></div></div>`;
+  });});
+  monGrid.innerHTML=html;
+}
+monTabs.addEventListener('click',e=>{ const t=e.target.closest('.ptab'); if(t) renderMonitor(t.dataset.f==='all'?'all':+t.dataset.f); });
+document.getElementById('monSearch').addEventListener('input',e=>{
+  const q=e.target.value.trim().toLowerCase();
+  [...monGrid.querySelectorAll('.dev-card')].forEach(c=>{ c.style.display = c.textContent.toLowerCase().includes(q)?'':'none'; });
+});
+renderMonitor('all');
+
+/* ============ alerts page ============ */
+const ALERTS=[['10:24','Harbour Tower 維港大廈','煙感探測器連續告警（3F 東區走廊）','rd','ALARM','處理中','高'],['10:12','Fortune Court 富臨閣','噴淋泵故障停機（B1 水泵房）','rd','ALARM','已派單','高'],['09:48','Lion Rock Tower 獅子山大廈','消防水壓持續偏低（12F 管井）','am','RISK','關注中','中'],['09:15','Kowloon Commerce 九龍商貿中心','電氣火災監控剩餘電流越限','am','RISK','已確認','中'],['08:52','Harbour Tower 維港大廈','消防廣播迴路自檢異常','am','RISK','已確認','低'],['昨日 18:40','Dragon Centre 龍騰中心','溫感探測器誤報（已復位）','gn','RESOLVED','已完成','低'],['昨日 16:02','Metro Hub 港鐵樞紐中心','月度巡檢完成，無異常','gn','RESOLVED','已完成','低']];
+let alFilter='all';
+const alTabs=document.getElementById('alTabs'),alList=document.getElementById('alList'),alStats=document.getElementById('alStats'),alThead=document.getElementById('alThead');
+const alCols='110px 1.3fr 1.8fr 120px 110px 80px';
+function renderAlerts(){
+  alTabs.innerHTML=[['all','全部'],['rd','告警'],['am','風險'],['gn','已處理']].map(t=>`<div class="ptab ${alFilter===t[0]?'on':''}" data-f="${t[0]}">${t[1]}</div>`).join('');
+  alThead.style.gridTemplateColumns=alCols;
+  alThead.innerHTML=`<span>${LANG==='zh'?'時間':'Time'}</span><span>${LANG==='zh'?'樓宇':'Building'}</span><span>${LANG==='zh'?'事件描述':'Event'}</span><span>${LANG==='zh'?'等級':'Level'}</span><span>${LANG==='zh'?'狀態':'Status'}</span><span>${LANG==='zh'?'操作':'Action'}</span>`;
+  alStats.innerHTML=
+    sumCard('#EF4444','M12 3 2 20h20L12 3zM12 10v4M12 17.5v.5',ALERTS.filter(a=>a[3]==='rd').length,'',LANG==='zh'?'未處理告警':'Open')+
+    sumCard('#F59E0B','M8 2v4M16 2v4M3 8h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z','+3','',LANG==='zh'?'今日新增':'New Today')+
+    sumCard('#38BDF8','M12 8v4l3 3M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','2.4m','',LANG==='zh'?'平均響應':'Avg Response')+
+    sumCard('#34D399','M20 6 9 17l-5-5',ALERTS.filter(a=>a[3]==='gn').length,'',LANG==='zh'?'已解決':'Resolved');
+  alList.innerHTML=ALERTS.filter(a=>alFilter==='all'||a[3]===alFilter).map(a=>
+    `<div class="trow" style="grid-template-columns:${alCols}">
+      <span class="td-dim">${a[0]}</span>
+      <span class="td-main">${a[1]}</span>
+      <span class="td-dim">${a[2]}</span>
+      <span><span class="tag ${a[3]}">${a[4]}</span></span>
+      <span class="td-dim">${a[5]}</span>
+      <span class="act">${LANG==='zh'?'詳情':'View'}</span></div>`).join('');
+}
+alTabs.addEventListener('click',e=>{ const t=e.target.closest('.ptab'); if(t){alFilter=t.dataset.f; renderAlerts();} });
+renderAlerts();
+
+/* ============ maintenance page ============ */
+const ORDERS=[['WO-2615','Harbour Tower 維港大廈','更換 3F 煙感探測器 ×4','張師傅','08-15','rd','待處理',10],['WO-2612','Fortune Court 富臨閣','噴淋泵檢修與備件更換','李師傅','08-16','am','進行中',55],['WO-2609','Lion Rock Tower 獅子山大廈','12F 管井減壓閥調試','陳師傅','08-16','am','進行中',70],['WO-2604','Harbour Tower 維港大廈','消防廣播迴路檢修','黃師傅','08-14','bl','待驗收',90],['WO-2598','Pearl Residences 明珠苑','季度全樓巡檢','周師傅','08-12','gn','已完成',100]];
+const mtStats=document.getElementById('mtStats'),mtList=document.getElementById('mtList'),mtThead=document.getElementById('mtThead');
+const mtCols='110px 1.2fr 1.8fr 90px 80px 140px 90px';
+function renderMaint(){
+  mtThead.style.gridTemplateColumns=mtCols;
+  mtThead.innerHTML=`<span>${LANG==='zh'?'工單':'ID'}</span><span>${LANG==='zh'?'樓宇':'Building'}</span><span>${LANG==='zh'?'內容':'Task'}</span><span>${LANG==='zh'?'負責人':'Owner'}</span><span>${LANG==='zh'?'截止':'Due'}</span><span>${LANG==='zh'?'進度':'Progress'}</span><span>${LANG==='zh'?'狀態':'Status'}</span>`;
+  const cnt=k=>ORDERS.filter(o=>o[6]===k).length;
+  mtStats.innerHTML=
+    sumCard('#EF4444','M12 8v4l3 3M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z',cnt('rd'),'',LANG==='zh'?'待處理':'Pending')+
+    sumCard('#F59E0B','M13 2 4 14h6l-1 8 9-12h-6l1-8z',cnt('am'),'',LANG==='zh'?'進行中':'In Progress')+
+    sumCard('#38BDF8','M9 11l3 3L22 4',cnt('bl'),'',LANG==='zh'?'待驗收':'Awaiting')+
+    sumCard('#34D399','M20 6 9 17l-5-5',cnt('gn'),'',LANG==='zh'?'已完成':'Done');
+  mtList.innerHTML=ORDERS.map(o=>`<div class="trow" style="grid-template-columns:${mtCols}">
+    <span class="td-dim">${o[0]}</span><span class="td-main">${o[1]}</span><span class="td-dim">${o[2]}</span>
+    <span class="td-dim">${o[3]}</span><span class="td-dim">${o[4]}</span>
+    <span><div class="mini-bar"><i style="width:${o[7]}%;background:${o[5]==='rd'?'#EF4444':o[5]==='am'?'#F59E0B':o[5]==='bl'?'#38BDF8':'#34D399'}"></i></div></span>
+    <span><span class="tag ${o[5]}">${o[6]}</span></span></div>`).join('');
+}
+renderMaint();
+
+/* ============ analytics page ============ */
+function renderAnalytics(){
+  const anStats=document.getElementById('anStats');
+  anStats.innerHTML=
+    sumCard('#EF4444','M12 3 2 20h20L12 3zM12 10v4M12 17.5v.5',TOT_ALM,'',LANG==='zh'?'告警總數':'Total')+
+    sumCard('#38BDF8','M12 8v4l3 3M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','2.4m','',LANG==='zh'?'平均響應':'Avg Response')+
+    sumCard('#34D399','M5 12h14M12 5l7 7-7 7',ON_RATE+'%','',LANG==='zh'?'設備在線率':'Online Rate')+
+    sumCard('#7CC4FF','M12 2a7 7 0 0 0-7 7v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9a7 7 0 0 0-7-7z',AVG_HEALTH,'',LANG==='zh'?'健康度均值':'Avg Health');
+  const anRange=document.getElementById('anRange');
+  const ranges=[['7d','7日'],['30d','30日'],['12m','12月']];
+  anRange.innerHTML=ranges.map(r=>`<div class="ptab ${r[0]==='7d'?'on':''}" data-r="${r[0]}">${r[1]}</div>`).join('');
+}
+renderAnalytics();
+
+/* ============ reports page ============ */
+const REPORTS=[['園區消防月度報告','2026-07 · PDF · 4.2 MB','monthly'],['設備巡檢週報','2026-W32 · PDF · 1.8 MB','weekly'],['告警分析專項報告','2026-08 · PDF · 2.6 MB','alarm'],['年度合規審計報告','2025 · PDF · 9.4 MB','annual']];
+let rpFilter='all';
+const rpGrid=document.getElementById('rpGrid'),rpTabs=document.getElementById('rpTabs');
+function renderReports(){
+  rpTabs.innerHTML=[['all','全部'],['monthly','月度'],['weekly','週報'],['alarm','專項'],['annual','年度']].map(t=>`<div class="ptab ${rpFilter===t[0]?'on':''}" data-f="${t[0]}">${t[1]}</div>`).join('');
+  rpGrid.innerHTML=REPORTS.filter(r=>rpFilter==='all'||r[2]===rpFilter).map(r=>`<div class="rp-card">
+    <div class="ri"><svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg></div>
+    <div class="rt">${r[0]}</div><div class="rm">${r[1]}</div>
+    <div class="rmeta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;vertical-align:-2px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/></svg> PDF</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px;vertical-align:-2px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg> ${LANG==='zh'?'已生成':'Ready'}</span></div>
+    <div class="rbtn"><button class="dl-btn">${LANG==='zh'?'下載報告':'Download'}</button><button class="dl-btn ghost">${LANG==='zh'?'預覽':'Preview'}</button></div></div>`).join('');
+}
+rpTabs.addEventListener('click',e=>{ const t=e.target.closest('.ptab'); if(t){rpFilter=t.dataset.f; renderReports();} });
+renderReports();
+
+/* ============ more page ============ */
+const MORES=[['M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 12a7 7 0 1 1-14 0 7 7 0 0 1 14 0z','系統設定','System Settings','園區參數、地圖、設備接入配置'],['M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.9','帳號與權限','Accounts & Roles','用戶、角色與訪問控制'],['M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M10 21a2 2 0 0 0 4 0','通知偏好','Notifications','告警推送與提醒規則']];
+const MORES2=[['M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z','幫助中心','Help Center','操作指南與常見問題'],['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z','安全策略','Security Policy','安全審計與合規設置'],['M12 8v4l3 3M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z','關於平台','About Omni OS','版本資訊與更新日誌']];
+function renderMore(){
+  document.getElementById('moGrid').innerHTML=MORES.map(m=>`<div class="more-card"><div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${m[0]}"/></svg></div><div><div class="mt">${m[1]}</div><div class="ms">${m[3]}</div></div><div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></div></div>`).join('');
+  document.getElementById('moGrid2').innerHTML=MORES2.map(m=>`<div class="more-card"><div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${m[0]}"/></svg></div><div><div class="mt">${m[1]}</div><div class="ms">${m[3]}</div></div><div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg></div></div>`).join('');
+}
+renderMore();
+
+/* ============ language toggle re-render ============ */
+langBtn.onclick=()=>{ LANG = LANG==='zh'?'en':'zh'; applyLang();
+  renderBlist(); renderMonitor(monFilter); renderAlerts(); renderMaint(); renderAnalytics(); renderReports(); renderMore(); renderHealth(); };
+
+applyLang();
+</script>
+</body>
+</html>
