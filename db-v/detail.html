@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设备详情</title>
+    <style id="theme-vars">
+/* ============================================================
+   Hong Kong Fire Equipment Monitoring Dashboard
+   Design tokens — deep navy base + single cyan brand hue
+   Free-explore mode: one brand hue, no secondary/accent brand
+   ============================================================ */
+
+:root,
+html.dark {
+  /* Base surfaces (deep navy) */
+  --hkfd-background: #07111f;
+  --hkfd-foreground: #E8F2FF;
+
+  --hkfd-card: #0c1a2e;
+  --hkfd-card-foreground: #E8F2FF;
+
+  --hkfd-popover: #0f2138;
+  --hkfd-popover-foreground: #E8F2FF;
+
+  --hkfd-muted: #10243c;
+  --hkfd-muted-foreground: #93acc9;
+
+  /* Single brand hue — cyan */
+  --hkfd-primary: #22d3ee;
+  --hkfd-primary-foreground: #04161b;
+
+  --hkfd-border: rgba(125, 170, 220, 0.12);
+  --hkfd-input: rgba(125, 170, 220, 0.16);
+  --hkfd-ring: #22d3ee;
+
+  /* Extended surface scale (layering, not brand hues) */
+  --hkfd-surface: #0c1a2e;
+  --hkfd-surface-2: #122844;
+  --hkfd-ink-2: #93acc9;
+  --hkfd-ink-3: #5e778f;
+  --hkfd-line: rgba(125, 170, 220, 0.12);
+
+  /* Semantic state colors — status only */
+  --hkfd-state-success: #34d399;
+  --hkfd-state-warning: #fbbf24;
+  --hkfd-state-error: #f87171;
+  --hkfd-state-info: #38bdf8;
+
+  /* Map / tech accents (single hue family) */
+  --hkfd-glow: rgba(34, 211, 238, 0.55);
+  --hkfd-grid: rgba(120, 170, 220, 0.10);
+
+  /* Radius — two primary tiers (8 / 16) + pill */
+  --hkfd-radius-sm: 4px;
+  --hkfd-radius-md: 8px;
+  --hkfd-radius-lg: 16px;
+  --hkfd-radius-pill: 999px;
+
+  /* Shadows — subtle only */
+  --hkfd-shadow-1: 0 1px 2px rgba(2, 12, 24, 0.45);
+  --hkfd-shadow-2: 0 8px 28px -10px rgba(2, 12, 24, 0.7);
+
+  /* Type */
+  --hkfd-font-sans: -apple-system, "SF Pro Display", "SF Pro Text", "Inter", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+  --hkfd-font-mono: "SF Mono", "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  --hkfd-tracking-tight: -0.01em;
+}
+
+html.light {
+  --hkfd-background: #eef2f8;
+  --hkfd-foreground: #0c1b2e;
+
+  --hkfd-card: #ffffff;
+  --hkfd-card-foreground: #0c1b2e;
+
+  --hkfd-popover: #ffffff;
+  --hkfd-popover-foreground: #0c1b2e;
+
+  --hkfd-muted: #e3eaf3;
+  --hkfd-muted-foreground: #566780;
+
+  --hkfd-primary: #0891b2;
+  --hkfd-primary-foreground: #ffffff;
+
+  --hkfd-border: rgba(13, 40, 70, 0.10);
+  --hkfd-input: rgba(13, 40, 70, 0.14);
+  --hkfd-ring: #0891b2;
+
+  --hkfd-surface: #ffffff;
+  --hkfd-surface-2: #e3eaf3;
+  --hkfd-ink-2: #566780;
+  --hkfd-ink-3: #8493a8;
+  --hkfd-line: rgba(13, 40, 70, 0.10);
+
+  --hkfd-state-success: #059669;
+  --hkfd-state-warning: #d97706;
+  --hkfd-state-error: #dc2626;
+  --hkfd-state-info: #0284c7;
+
+  --hkfd-glow: rgba(8, 145, 178, 0.40);
+  --hkfd-grid: rgba(13, 40, 70, 0.08);
+
+  --hkfd-shadow-1: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --hkfd-shadow-2: 0 8px 28px -10px rgba(15, 23, 42, 0.18);
+}
+
+@layer base {
+  html {
+    font-family: var(--hkfd-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    font-family: var(--hkfd-font-sans);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .font-mono,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  ::selection {
+    background: var(--hkfd-primary);
+    color: var(--hkfd-primary-foreground);
+  }
+  /* Slim, themed scrollbars for dashboard panels */
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--hkfd-line) transparent;
+  }
+  .scroll-area::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: var(--hkfd-line);
+    border-radius: var(--hkfd-radius-pill);
+  }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--hkfd-background);
+    --color-foreground: var(--hkfd-foreground);
+    --color-card: var(--hkfd-card);
+    --color-card-foreground: var(--hkfd-card-foreground);
+    --color-popover: var(--hkfd-popover);
+    --color-popover-foreground: var(--hkfd-popover-foreground);
+    --color-primary: var(--hkfd-primary);
+    --color-primary-foreground: var(--hkfd-primary-foreground);
+    --color-muted: var(--hkfd-muted);
+    --color-muted-foreground: var(--hkfd-muted-foreground);
+    --color-border: var(--hkfd-border);
+    --color-input: var(--hkfd-input);
+    --color-ring: var(--hkfd-ring);
+    --radius-sm: var(--hkfd-radius-sm);
+    --radius-md: var(--hkfd-radius-md);
+    --radius-lg: var(--hkfd-radius-lg);
+  }
+  @layer base {
+    body { background: var(--hkfd-background); color: var(--hkfd-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--hkfd-background); }
+      .text-background { color: var(--hkfd-background); }
+      .border-background { border-color: var(--hkfd-background); }
+      .ring-background { --tw-ring-color: var(--hkfd-background); }
+      .bg-foreground { background-color: var(--hkfd-foreground); }
+      .text-foreground { color: var(--hkfd-foreground); }
+      .border-foreground { border-color: var(--hkfd-foreground); }
+      .ring-foreground { --tw-ring-color: var(--hkfd-foreground); }
+      .bg-card { background-color: var(--hkfd-card); }
+      .text-card { color: var(--hkfd-card); }
+      .border-card { border-color: var(--hkfd-card); }
+      .ring-card { --tw-ring-color: var(--hkfd-card); }
+      .bg-card-foreground { background-color: var(--hkfd-card-foreground); }
+      .text-card-foreground { color: var(--hkfd-card-foreground); }
+      .border-card-foreground { border-color: var(--hkfd-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--hkfd-card-foreground); }
+      .bg-popover { background-color: var(--hkfd-popover); }
+      .text-popover { color: var(--hkfd-popover); }
+      .border-popover { border-color: var(--hkfd-popover); }
+      .ring-popover { --tw-ring-color: var(--hkfd-popover); }
+      .bg-popover-foreground { background-color: var(--hkfd-popover-foreground); }
+      .text-popover-foreground { color: var(--hkfd-popover-foreground); }
+      .border-popover-foreground { border-color: var(--hkfd-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--hkfd-popover-foreground); }
+      .bg-primary { background-color: var(--hkfd-primary); }
+      .text-primary { color: var(--hkfd-primary); }
+      .border-primary { border-color: var(--hkfd-primary); }
+      .ring-primary { --tw-ring-color: var(--hkfd-primary); }
+      .bg-primary-foreground { background-color: var(--hkfd-primary-foreground); }
+      .text-primary-foreground { color: var(--hkfd-primary-foreground); }
+      .border-primary-foreground { border-color: var(--hkfd-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--hkfd-primary-foreground); }
+      .bg-muted { background-color: var(--hkfd-muted); }
+      .text-muted { color: var(--hkfd-muted); }
+      .border-muted { border-color: var(--hkfd-muted); }
+      .ring-muted { --tw-ring-color: var(--hkfd-muted); }
+      .bg-muted-foreground { background-color: var(--hkfd-muted-foreground); }
+      .text-muted-foreground { color: var(--hkfd-muted-foreground); }
+      .border-muted-foreground { border-color: var(--hkfd-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--hkfd-muted-foreground); }
+      .bg-border { background-color: var(--hkfd-border); }
+      .text-border { color: var(--hkfd-border); }
+      .border-border { border-color: var(--hkfd-border); }
+      .ring-border { --tw-ring-color: var(--hkfd-border); }
+      .bg-input { background-color: var(--hkfd-input); }
+      .text-input { color: var(--hkfd-input); }
+      .border-input { border-color: var(--hkfd-input); }
+      .ring-input { --tw-ring-color: var(--hkfd-input); }
+      .bg-ring { background-color: var(--hkfd-ring); }
+      .text-ring { color: var(--hkfd-ring); }
+      .border-ring { border-color: var(--hkfd-ring); }
+      .ring-ring { --tw-ring-color: var(--hkfd-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="font-sans antialiased">
+
+<style id="detail-layout">
+  /* ============ App-shell geometry ============ */
+  html, body { height: 100%; }
+  body {
+    overflow: hidden;
+    background: var(--hkfd-background);
+    color: var(--hkfd-foreground);
+  }
+  #app {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ---------- Nav bar ---------- */
+  #nav-bar {
+    height: 64px;
+    flex: 0 0 64px;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 20px;
+    background: rgba(7, 17, 31, 0.82);
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    border-bottom: 1px solid var(--hkfd-border);
+  }
+  html.light #nav-bar { background: rgba(238, 242, 248, 0.82); }
+
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px;
+    padding: 0 10px;
+    color: var(--hkfd-ink-2);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--hkfd-radius-md);
+    cursor: pointer;
+    font-size: 13px;
+    font-family: var(--hkfd-font-sans);
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+  .back-btn svg { width: 16px; height: 16px; }
+  .back-btn:hover { color: var(--hkfd-foreground); background: var(--hkfd-muted); border-color: var(--hkfd-border); }
+
+  .nav-divider {
+    width: 1px; height: 22px;
+    background: var(--hkfd-border);
+    flex-shrink: 0;
+  }
+  .nav-title {
+    font-size: 15px; font-weight: 600;
+    color: var(--hkfd-foreground);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .nav-device-name {
+    font-size: 13px;
+    color: var(--hkfd-primary);
+    margin-left: auto;
+    font-weight: 500;
+  }
+
+  /* ---------- Content area ---------- */
+  #content {
+    flex: 1; min-height: 0;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  #content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    #content-grid { grid-template-columns: 1fr; }
+    #content { padding: 12px; }
+  }
+
+  /* ---------- Glass panel ---------- */
+  .glass-panel {
+    background: rgba(12, 26, 46, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--hkfd-border);
+    border-radius: var(--hkfd-radius-lg);
+    box-shadow: var(--hkfd-shadow-2);
+  }
+  html.light .glass-panel { background: rgba(255,255,255,0.78); }
+  .panel-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px 0 16px;
+    font-size: 13px; font-weight: 600;
+    color: var(--hkfd-foreground);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .panel-header svg { width: 16px; height: 16px; color: var(--hkfd-primary); flex-shrink: 0; }
+  .panel-body { padding: 14px 16px; }
+
+  /* ---------- Status badge ---------- */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px;
+    border-radius: var(--hkfd-radius-pill);
+    font-size: 12px; font-weight: 600; line-height: 1;
+  }
+  .status-badge.normal { background: rgba(52,211,153,0.12); color: var(--hkfd-state-success); border: 1px solid rgba(52,211,153,0.28); }
+  .status-badge.warning { background: rgba(251,191,36,0.12); color: var(--hkfd-state-warning); border: 1px solid rgba(251,191,36,0.28); }
+  .status-badge.alert { background: rgba(248,113,113,0.12); color: var(--hkfd-state-error); border: 1px solid rgba(248,113,113,0.28); }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot.green { background: var(--hkfd-state-success); box-shadow: 0 0 6px rgba(52,211,153,0.55); }
+  .status-dot.yellow { background: var(--hkfd-state-warning); box-shadow: 0 0 6px rgba(251,191,36,0.55); }
+  .status-dot.red { background: var(--hkfd-state-error); box-shadow: 0 0 6px rgba(248,113,113,0.55); }
+
+  /* ---------- Device info row ---------- */
+  .device-info-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .device-info-item {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .info-label {
+    font-size: 11px; color: var(--hkfd-ink-3);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .info-value {
+    font-size: 13px; font-weight: 500; color: var(--hkfd-foreground);
+  }
+  .info-value.tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* ---------- Online rate ring ---------- */
+  .ring-container {
+    display: flex; align-items: center; gap: 16px;
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--hkfd-muted);
+    border-radius: var(--hkfd-radius-md);
+  }
+  .ring-chart {
+    position: relative;
+    width: 72px; height: 72px;
+    flex-shrink: 0;
+  }
+  .ring-chart svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--hkfd-surface-2); stroke-width: 6; }
+  .ring-fg { fill: none; stroke: var(--hkfd-primary); stroke-width: 6; stroke-linecap: round; filter: drop-shadow(0 0 4px var(--hkfd-glow)); transition: stroke-dashoffset 0.8s ease; }
+  .ring-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .ring-value {
+    font-size: 18px; font-weight: 700;
+    color: var(--hkfd-foreground);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  .ring-label {
+    font-size: 10px; color: var(--hkfd-ink-3);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .ring-detail { flex: 1; min-width: 0; }
+  .ring-detail-item {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; padding: 3px 0;
+  }
+  .ring-detail-item .label { color: var(--hkfd-ink-3); }
+  .ring-detail-item .value { color: var(--hkfd-foreground); font-weight: 500; }
+
+  /* ---------- KPI grid ---------- */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .kpi-card {
+    background: var(--hkfd-muted);
+    border-radius: var(--hkfd-radius-md);
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .kpi-label {
+    font-size: 11px; color: var(--hkfd-ink-3);
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .kpi-value {
+    font-size: 20px; font-weight: 700;
+    color: var(--hkfd-foreground);
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+  .kpi-value.primary { color: var(--hkfd-primary); }
+
+  /* ---------- Alerts table ---------- */
+  .alert-table {
+    width: 100%; border-collapse: collapse;
+  }
+  .alert-table th {
+    text-align: left; font-size: 11px; font-weight: 500;
+    color: var(--hkfd-ink-3); padding: 0 0 8px 0;
+    letter-spacing: var(--hkfd-tracking-tight);
+  }
+  .alert-table td {
+    padding: 8px 0;
+    font-size: 12px;
+    border-top: 1px solid var(--hkfd-line);
+    vertical-align: middle;
+  }
+  .alert-severity {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--hkfd-radius-pill);
+  }
+  .alert-severity.critical { color: var(--hkfd-state-error); background: rgba(248,113,113,0.1); }
+  .alert-severity.warning { color: var(--hkfd-state-warning); background: rgba(251,191,36,0.1); }
+  .alert-severity.info { color: var(--hkfd-state-info); background: rgba(56,189,248,0.1); }
+  .sev-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .sev-dot.critical { background: var(--hkfd-state-error); }
+  .sev-dot.warning { background: var(--hkfd-state-warning); }
+  .sev-dot.info { background: var(--hkfd-state-info); }
+
+  /* ---------- Timeline ---------- */
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 7px; top: 4px; bottom: 4px;
+    width: 1px;
+    background: var(--hkfd-line);
+  }
+  .timeline-item {
+    position: relative;
+    padding: 0 0 14px 0;
+    font-size: 12px;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-item::before {
+    content: '';
+    position: absolute; left: -17px; top: 5px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--hkfd-primary);
+    box-shadow: 0 0 5px var(--hkfd-glow);
+  }
+  .tl-date { font-size: 11px; color: var(--hkfd-ink-3); margin-bottom: 2px; }
+  .tl-desc { color: var(--hkfd-foreground); font-weight: 500; }
+  .tl-status {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: var(--hkfd-radius-pill);
+    background: rgba(52,211,153,0.12);
+    color: var(--hkfd-state-success);
+    margin-left: 6px;
+  }
+
+  /* ---------- Chart container ---------- */
+  .chart-container {
+    width: 100%; height: 180px;
+    margin-top: 4px;
+  }
+  .chart-container canvas { width: 100% !important; height: 100% !important; }
+
+  /* ---------- Scroll area ---------- */
+  .scroll-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--hkfd-line) transparent;
+  }
+  .scroll-area::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-area::-webkit-scrollbar-thumb {
+    background: var(--hkfd-line);
+    border-radius: var(--hkfd-radius-pill);
+  }
+  .scroll-area::-webkit-scrollbar-track { background: transparent; }
+</style>
+
+<div id="app">
+  <!-- Navigation Bar -->
+  <header id="nav-bar">
+    <button class="back-btn" onclick="window.location.href='index.html'" aria-label="返回仪表板">
+      <i data-lucide="arrow-left"></i>
+      <span>返回仪表板</span>
+    </button>
+    <div class="nav-divider"></div>
+    <span class="nav-title">设备详情</span>
+    <span class="nav-device-name" id="nav-device-name">—</span>
+  </header>
+
+  <!-- Content -->
+  <div id="content" class="scroll-area">
+    <div id="content-grid">
+
+      <!-- ===== LEFT COLUMN ===== -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Device Status Card -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <i data-lucide="activity"></i>
+            <span>设备状态</span>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <span style="font-size:18px;font-weight:700;color:var(--hkfd-foreground);" id="device-name">未知设备</span>
+              <span class="status-badge normal" id="status-badge">
+                <span class="status-dot green"></span>
+                <span id="status-text">正常</span>
+              </span>
+            </div>
+
+            <!-- Online rate ring -->
+            <div class="ring-container">
+              <div class="ring-chart">
+                <svg viewBox="0 0 72 72" width="72" height="72">
+                  <circle class="ring-bg" cx="36" cy="36" r="31"/>
+                  <circle class="ring-fg" id="ring-fg" cx="36" cy="36" r="31"
+                    stroke-dasharray="194.78"
+                    stroke-dashoffset="6.0"/>
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-value" id="ring-percent">96.9%</span>
+                  <span class="ring-label">在线率</span>
+                </div>
+              </div>
+              <div class="ring-detail">
+                <div class="ring-detail-item"><span class="label">在线</span><span class="value">372</span></div>
+                <div class="ring-detail-item"><span class="label">离线</span><span class="value">8</span></div>
+                <div class="ring-detail-item"><span class="label">故障</span><span class="value">4</span></div>
+              </div>
+            </div>
+
+            <!-- Device info -->
+            <div class="device-info-row">
+              <div class="device-info-item">
+                <span class="info-label">最后心跳</span>
+                <span class="info-value tabular" id="last-heartbeat">2026-08-15 14:32:18</span>
+              </div>
+              <div class="device-info-item">
+                <span class="info-label">设备ID</span>
+                <span class="info-value tabular">HK-FD-2024-0815</span>
+              </div>
+              <div class="device-info-item">
+                <span class="info-label">坐标</span>
+                <span class="info-value tabular" id="device-coords">22.3193, 114.1694</span>
+              </div>
+              <div class="device-info-item">
+                <span class="info-label">设备类型</span>
+                <span class="info-value">消防栓监测终端</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device Metrics Card -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <i data-lucide="bar-chart-3"></i>
+            <span>设备指标</span>
+          </div>
+          <div class="panel-body">
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <span class="kpi-label">设备总数</span>
+                <span class="kpi-value">384</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">在线设备</span>
+                <span class="kpi-value primary">372</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">离线设备</span>
+                <span class="kpi-value">8</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">故障设备</span>
+                <span class="kpi-value">4</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">在线率</span>
+                <span class="kpi-value primary">96.9%</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">数据吞吐</span>
+                <span class="kpi-value">1.2 MB/s</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">心跳间隔</span>
+                <span class="kpi-value">30s</span>
+              </div>
+              <div class="kpi-card">
+                <span class="kpi-label">运行时长</span>
+                <span class="kpi-value">1,284h</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Recent Alerts Card -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <i data-lucide="bell-ring"></i>
+            <span>近期告警</span>
+          </div>
+          <div class="panel-body" style="padding-top:8px;">
+            <table class="alert-table">
+              <thead>
+                <tr><th>告警内容</th><th>时间</th><th>级别</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>烟感离线</td>
+                  <td style="color:var(--hkfd-ink-3);">14:21</td>
+                  <td><span class="alert-severity critical"><span class="sev-dot critical"></span>紧急</span></td>
+                </tr>
+                <tr>
+                  <td>水压偏低</td>
+                  <td style="color:var(--hkfd-ink-3);">13:05</td>
+                  <td><span class="alert-severity warning"><span class="sev-dot warning"></span>警告</span></td>
+                </tr>
+                <tr>
+                  <td>电池电量低</td>
+                  <td style="color:var(--hkfd-ink-3);">12:48</td>
+                  <td><span class="alert-severity info"><span class="sev-dot info"></span>提示</span></td>
+                </tr>
+                <tr>
+                  <td>通讯超时</td>
+                  <td style="color:var(--hkfd-ink-3);">11:30</td>
+                  <td><span class="alert-severity warning"><span class="sev-dot warning"></span>警告</span></td>
+                </tr>
+                <tr>
+                  <td>手动报警触发</td>
+                  <td style="color:var(--hkfd-ink-3);">10:15</td>
+                  <td><span class="alert-severity info"><span class="sev-dot info"></span>提示</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Maintenance History Card -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <i data-lucide="clipboard-list"></i>
+            <span>维护记录</span>
+          </div>
+          <div class="panel-body">
+            <div class="timeline">
+              <div class="timeline-item">
+                <div class="tl-date">2026-08-14</div>
+                <div class="tl-desc">消防栓巡检<span class="tl-status">已完成</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="tl-date">2026-08-10</div>
+                <div class="tl-desc">报警阀测试<span class="tl-status">已完成</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="tl-date">2026-08-05</div>
+                <div class="tl-desc">烟感更换<span class="tl-status">已完成</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="tl-date">2026-07-28</div>
+                <div class="tl-desc">喷淋系统检查<span class="tl-status">已完成</span></div>
+              </div>
+              <div class="timeline-item">
+                <div class="tl-date">2026-07-20</div>
+                <div class="tl-desc">消防主机升级<span class="tl-status">已完成</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Day Trend Chart -->
+        <div class="glass-panel">
+          <div class="panel-header">
+            <i data-lucide="trending-up"></i>
+            <span>7日在线率趋势</span>
+          </div>
+          <div class="panel-body">
+            <div class="chart-container">
+              <canvas id="trend-chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  /* ============ URL Parameter Handling ============ */
+  function getParam(name, fallback) {
+    var params = new URLSearchParams(window.location.search);
+    return params.get(name) || fallback;
+  }
+
+  var deviceName = getParam('name', '未知设备');
+  var colorParam = getParam('color', 'n');
+  var lng = getParam('lng', '114.1694');
+  var lat = getParam('lat', '22.3193');
+
+  /* Status mapping */
+  var statusMap = {
+    'n': { text: '正常', cls: 'normal', dotCls: 'green', badgeBg: 'rgba(52,211,153,0.12)', color: '#34d399' },
+    'w': { text: '需关注', cls: 'warning', dotCls: 'yellow', badgeBg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+    'a': { text: '告警', cls: 'alert', dotCls: 'red', badgeBg: 'rgba(248,113,113,0.12)', color: '#f87171' }
+  };
+  var status = statusMap[colorParam] || statusMap['n'];
+
+  /* Update DOM */
+  document.getElementById('device-name').textContent = deviceName;
+  document.getElementById('nav-device-name').textContent = deviceName;
+  document.getElementById('device-coords').textContent = lat + ', ' + lng;
+
+  var badge = document.getElementById('status-badge');
+  badge.className = 'status-badge ' + status.cls;
+  badge.querySelector('.status-dot').className = 'status-dot ' + status.dotCls;
+  document.getElementById('status-text').textContent = status.text;
+
+  /* Update last heartbeat to now */
+  var now = new Date();
+  document.getElementById('last-heartbeat').textContent =
+    now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0') + ':' +
+    String(now.getSeconds()).padStart(2, '0');
+
+  /* ============ 7-Day Trend Chart ============ */
+  var ctx = document.getElementById('trend-chart').getContext('2d');
+  var gradient = ctx.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, 'rgba(34, 211, 238, 0.25)');
+  gradient.addColorStop(1, 'rgba(34, 211, 238, 0.0)');
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['08-09', '08-10', '08-11', '08-12', '08-13', '08-14', '08-15'],
+      datasets: [{
+        label: '在线率',
+        data: [96.5, 96.8, 96.3, 96.9, 96.7, 97.0, 96.9],
+        borderColor: '#22d3ee',
+        backgroundColor: gradient,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointBackgroundColor: '#22d3ee',
+        pointBorderColor: '#07111f',
+        pointBorderWidth: 2,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: '#22d3ee'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(12, 26, 46, 0.95)',
+          titleColor: '#93acc9',
+          bodyColor: '#E8F2FF',
+          borderColor: 'rgba(125, 170, 220, 0.2)',
+          borderWidth: 1,
+          cornerRadius: 8,
+          padding: 10,
+          callbacks: {
+            label: function(ctx) { return ctx.parsed.y + '%'; }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#5e778f', font: { size: 10 } },
+          grid: { color: 'rgba(125, 170, 220, 0.06)', drawBorder: false }
+        },
+        y: {
+          min: 95,
+          max: 98,
+          ticks: {
+            color: '#5e778f',
+            font: { size: 10 },
+            callback: function(v) { return v + '%'; }
+          },
+          grid: { color: 'rgba(125, 170, 220, 0.06)', drawBorder: false }
+        }
+      },
+      interaction: {
+        intersect: false,
+        mode: 'index'
+      }
+    }
+  });
+
+  /* Lucide icons */
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+})();
+</script>
+</body>
+</html>
