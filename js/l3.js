@@ -114,7 +114,7 @@ function renderPlan() {
     <defs><clipPath id="planClip"><rect x="8" y="8" width="${W - 16}" height="${H - 16}" rx="10"/></clipPath></defs>
     <g id="vp">
       <g clip-path="url(#planClip)">
-        <rect x="20" y="20" width="${W - 40}" height="${H - 40}" rx="8" fill="rgba(15,25,48,.4)" stroke="rgba(99,140,210,.35)" stroke-width="1.6"/>
+        <rect x="20" y="20" width="${W - 40}" height="${H - 40}" rx="8" fill="rgba(11,25,40,.4)" stroke="rgba(23,52,74,.9)" stroke-width="1.6"/>
         <rect x="400" y="190" width="220" height="180" rx="8" class="core"/>
         <text x="510" y="272" class="room-label" text-anchor="middle">${T('核心筒')}</text>
         <text x="510" y="292" class="room-label" text-anchor="middle">${T('電梯廳 · 消防前室')}</text>
@@ -306,7 +306,7 @@ function renderFloorBars() {
     AGG.map(a => ({ label: a.floor, value: a.rate, color: a.rate < 90 ? C.crit : scoreColor(a.rate), text: dense ? '' : a.rate + '' })),
     { h: 180, xn });
   document.getElementById('barAlarm').innerHTML = CHART.vbars(
-    AGG.map(a => ({ label: a.floor, value: a.abnormal, color: a.abnormal ? C.crit : 'rgba(158,158,158,.35)', text: dense || !a.abnormal ? '' : a.abnormal + '' })),
+    AGG.map(a => ({ label: a.floor, value: a.abnormal, color: a.abnormal ? C.crit : 'rgba(142,168,191,.35)', text: dense || !a.abnormal ? '' : a.abnormal + '' })),
     { h: 180, xn, int: true });
   [['#barOnline', a => `${T('在線率')} ${a.rate}%（${a.online}/${a.total}）`],
    ['#barAlarm', a => `${T('告警')} ${a.abnormal} ${T('條')} · ${T('設備')} ${a.total} ${T('個')}`]].forEach(([sel, tip]) => {

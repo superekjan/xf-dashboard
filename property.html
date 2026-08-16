@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>物業級消防設備大屏 · L2</title>
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=25">
 </head>
 <body>
 <div id="screen">
@@ -67,8 +67,9 @@
       <section class="panel">
         <header class="p-hd">
           <h2 data-i18n="物業告警清單">物業告警清單</h2>
-          <div class="chips" id="bFilter"><button class="chip on" data-b="" data-i18n="全部樓宇">全部樓宇</button></div>
+          <span class="p-sub" id="alarmSub"></span>
         </header>
+        <div class="p-filter"><div class="chips" id="bFilter"><button class="chip on" data-b="" data-i18n="全部樓宇">全部樓宇</button></div></div>
         <div class="p-bd" id="alarmPanel"></div>
       </section>
       <section class="panel">
@@ -91,7 +92,7 @@
   </div>
 </div>
 
-<script src="js/data.js"></script>
+<script src="js/data.js?v=25"></script>
 <script src="js/charts.js"></script>
 <script src="js/common.js"></script>
 <script src="js/l2.js"></script>

@@ -198,7 +198,7 @@ setInterval(() => {
   cards.forEach(c => c.style.outline = '');
   const target = cards[tourIdx % cards.length];
   if (target) {
-    target.style.outline = '1.5px solid rgba(34,211,238,.6)';
+    target.style.outline = '1.5px solid rgba(25,211,255,.6)';
     target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   tourIdx++;

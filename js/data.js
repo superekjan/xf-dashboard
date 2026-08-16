@@ -23,8 +23,8 @@ const pick = (r, arr) => arr[Math.floor(r() * arr.length)];
 
 /* ---------- 常量 ---------- */
 const C = {
-  ok: '#00C853', crit: '#FF1744', warn: '#FF9100', idle: '#9E9E9E', caution: '#FFD600',
-  accent: '#1E88E5', cyan: '#22D3EE'
+  ok: '#27E6A3', crit: '#FF3B30', warn: '#FFB547', idle: '#8EA8BF', caution: '#FF6A3D',
+  accent: '#3478FF', cyan: '#19D3FF', ice: '#5CE1E6', purple: '#8B5CF6'
 };
 const REGION_NAME = { HK: '香港島', KL: '九龍', NT: '新界' };
 
@@ -165,12 +165,14 @@ function buildStats() {
   }
   alarms.sort((a, b) => b.time - a.time);
 
-  /* 健康評分（PRD 口徑：嚴重告警-5 / 離線-3 / 維護-1 / 傳感器異常-2） */
+  /* 健康評分（PRD 口徑：嚴重告警-5 / 離線率-3 / 維護率-1 / 傳感器異常率-2，按百分比扣分） */
   P.forEach(p => {
     const ca = alarms.filter(a => a.propertyId === p.id && a.level === 1).length;
     p.critAlarms = ca;
     p.alarmCount = alarms.filter(a => a.propertyId === p.id).length;
-    p.score = Math.max(0, 100 - ca * 5 - p.offline * 3 - p.maint - p.sensorAbn * 2);
+    const pct = n => p.total ? n / p.total * 100 : 0;
+    const sensorTotal = p.sensors.reduce((s, x) => s + x.total, 0) || 1;
+    p.score = Math.max(0, Math.round(100 - ca * 5 - pct(p.offline) * 3 - pct(p.maint) - p.sensorAbn / sensorTotal * 100 * 2));
     p.risk = p.alarmCount * 2 + (100 - p.score);
   });
   const overall = P.reduce((s, p) => s + p.score, 0) / P.length;

@@ -15,6 +15,11 @@ const CHART = (() => {
     const [x2, y2] = polar(cx, cy, r0, a1), [x3, y3] = polar(cx, cy, r0, a0);
     return `M${x0},${y0}A${r1},${r1} 0 ${large} 1 ${x1},${y1}L${x2},${y2}A${r0},${r0} 0 ${large} 0 ${x3},${y3}Z`;
   }
+  /* 开口弧线（用于仪表描边） */
+  function arcStroke(cx, cy, r, a0, a1) {
+    const [x0, y0] = polar(cx, cy, r, a0), [x1, y1] = polar(cx, cy, r, a1);
+    return `M${x0},${y0}A${r},${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1},${y1}`;
+  }
   function smoothPath(pts) {
     if (pts.length < 2) return '';
     let d = `M${pts[0][0]},${pts[0][1]}`;
@@ -88,7 +93,7 @@ const CHART = (() => {
       <div class="hb-row${opts.clickable ? ' hb-click' : ''}" data-idx="${idx}">
         <span class="sb-label">${it.label}</span>
         <span class="hb-track">
-          <span class="hb-fill" style="width:${(it.normal / max * 100).toFixed(1)}%;background:${C.ok}"></span>
+          <span class="hb-fill" style="width:${(it.normal / max * 100).toFixed(1)}%;background:${it.color || C.ok}"></span>
           <span class="hb-fill" style="width:${(it.abnormal / max * 100).toFixed(1)}%;background:${C.crit}"></span>
         </span>
         <span class="hb-val">${it.abnormal > 0 ? `<b style="color:${C.crit}">${it.abnormal}</b>` : '<b style="color:' + C.ok + '">0</b>'}<i>/${it.total}</i></span>
@@ -118,14 +123,16 @@ const CHART = (() => {
     const dots = coords.map((c, i) => `<circle cx="${c[0]}" cy="${c[1]}" r="9" fill="transparent" data-i="${i}" class="ln-hit"/>`).join('');
     return `<svg viewBox="0 0 ${W} ${H}" class="ch-line" preserveAspectRatio="none" style="height:100%">
       <defs><linearGradient id="${uid}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${opts.color || C.accent}" stop-opacity=".28"/>
-        <stop offset="1" stop-color="${opts.color || C.accent}" stop-opacity="0"/></linearGradient></defs>
+        <stop offset="0" stop-color="${opts.color || C.accent}" stop-opacity=".3"/>
+        <stop offset="1" stop-color="${opts.color || C.accent}" stop-opacity="0"/></linearGradient>
+        <filter id="${uid}b" x="-15%" y="-40%" width="130%" height="180%"><feGaussianBlur stdDeviation="5"/></filter></defs>
       ${grid.join('')}
       <path d="${area}" fill="url(#${uid})"/>
+      <path d="${smoothPath(coords)}" fill="none" stroke="${opts.color || C.accent}" stroke-width="6" opacity=".3" filter="url(#${uid}b)"/>
       <path d="${smoothPath(coords)}" fill="none" stroke="${opts.color || C.accent}" stroke-width="2.2" stroke-linecap="round"/>
       <g class="ln-cursor" style="display:none">
-        <line y1="${padT}" y2="${H - padB}" stroke="rgba(139,167,205,.45)" stroke-dasharray="3 4"/>
-        <circle r="4" fill="${opts.color || C.accent}" stroke="#060B16" stroke-width="2"/>
+        <line y1="${padT}" y2="${H - padB}" stroke="rgba(142,168,191,.5)" stroke-dasharray="3 4"/>
+        <circle r="4" fill="${opts.color || C.accent}" stroke="#050B14" stroke-width="2" style="filter:drop-shadow(0 0 6px ${opts.color || C.accent})"/>
       </g>
       ${dots}${xlabels}</svg>`;
   }
@@ -142,13 +149,13 @@ const CHART = (() => {
     items.forEach((it, i) => {
       const x = X(i) - bw / 2, y = Y(it.value), h = H - padB - y;
       bars += `<g class="vb-bar" data-i="${i}">
-        <rect x="${x}" y="${padT}" width="${bw}" height="${H - padT - padB}" fill="rgba(96,137,205,.07)" rx="3"/>
+        <rect x="${x}" y="${padT}" width="${bw}" height="${H - padT - padB}" fill="rgba(142,168,191,.08)" rx="3"/>
         <rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h, 2)}" fill="${it.color}" rx="3" opacity=".9"/>
         <text x="${X(i)}" y="${y - 6}" class="ch-barval" text-anchor="middle">${it.text ?? it.value}</text></g>`;
     });
     const grid = [0, .5, 1].map(t => {
       const v = max * (1 - t), y = padT + t * (H - padT - padB);
-      return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(96,137,205,.1)"/>
+      return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="rgba(142,168,191,.12)"/>
         <text x="${padL - 6}" y="${y + 4}" class="ch-tick" text-anchor="end">${opts.int ? v.toFixed(0) : v.toFixed(1)}</text>`;
     }).join('');
     const step = Math.max(1, Math.ceil(n / (opts.xn || 24)));
@@ -156,28 +163,43 @@ const CHART = (() => {
     return `<svg viewBox="0 0 ${W} ${H}" class="ch-vbars" preserveAspectRatio="none" style="height:100%">${grid}${bars}${xlabels}</svg>`;
   }
 
-  /* 仪表盘（240° 弧） */
+  /* 仪表盘（240° 弧 · 渐变描边 + 辉光） */
   function gauge(value, opts = {}) {
     const size = opts.size || 96, cx = size / 2, cy = size / 2, r = size * .42, w = opts.width || 7;
     const a0 = -120, a1 = 120, av = a0 + Math.max(0, Math.min(100, value)) / 100 * (a1 - a0);
     const color = opts.color || scoreColor(value);
+    const uid = 'gg' + Math.floor(Math.random() * 1e5);
     const ticks = [];
     for (let i = 0; i <= 10; i++) {
       const ang = a0 + i * 24;
       const [x0, y0] = polar(cx, cy, r + w / 2 + 2, ang), [x1, y1] = polar(cx, cy, r + w / 2 + 5, ang);
-      ticks.push(`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="rgba(139,167,205,.35)" stroke-width="1.2"/>`);
+      const on = a0 + i * 24 <= av + .01;
+      ticks.push(`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${on ? color : 'rgba(142,168,191,.35)'}" stroke-width="1.2" opacity="${on ? .8 : 1}"/>`);
     }
-    return ``;
+    return `<svg viewBox="0 0 ${size} ${size}" class="ch-gauge">
+      <defs>
+        <linearGradient id="${uid}" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="${color}" stop-opacity=".5"/>
+          <stop offset="1" stop-color="${color}"/></linearGradient>
+        <filter id="${uid}f" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="${Math.max(2, size / 20)}"/></filter>
+      </defs>
+      <path d="${arcStroke(cx, cy, r, a0, a1)}" fill="none" stroke="rgba(96,137,205,.14)" stroke-width="${w}" stroke-linecap="round"/>
+      <path d="${arcStroke(cx, cy, r, a0, av)}" fill="none" stroke="${color}" stroke-width="${w * 2.6}" stroke-linecap="round" opacity=".3" filter="url(#${uid}f)"/>
+      <path d="${arcStroke(cx, cy, r, a0, av)}" fill="none" stroke="url(#${uid})" stroke-width="${w}" stroke-linecap="round"/>
+      ${ticks.join('')}
+      <text x="${cx}" y="${cy + 4}" class="g-num" text-anchor="middle" fill="${color}">${Math.round(value)}</text>
+    </svg>`;
   }
 
   /* KPI 迷你进度环 */
   function ring(pct, color, size = 40) {
     const r = size / 2 - 3, c = 2 * Math.PI * r, off = c * (1 - Math.min(pct, 100) / 100);
     return `<svg viewBox="0 0 ${size} ${size}" class="ch-ring">
-      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(96,137,205,.16)" stroke-width="3.5"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(142,168,191,.18)" stroke-width="3.5"/>
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="3.5"
         stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${off}" transform="rotate(-90 ${size / 2} ${size / 2})"
-        style="transition:stroke-dashoffset .9s cubic-bezier(.22,1,.36,1)"/></svg>`;
+        style="transition:stroke-dashoffset .9s cubic-bezier(.22,1,.36,1);filter:drop-shadow(0 0 4px ${color})"/></svg>`;
   }
 
   return { donut, pie, hbars, stackedBars, line, vbars, gauge, ring };

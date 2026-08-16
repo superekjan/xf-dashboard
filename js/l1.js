@@ -180,7 +180,7 @@ function renderDonut() {
         emphasis: {
           scale: true,
           scaleSize: 8,
-          itemStyle: { shadowBlur: 24, shadowColor: 'rgba(34,211,238,.5)' },
+          itemStyle: { shadowBlur: 24, shadowColor: 'rgba(25,211,255,.5)' },
           label: {
             show: true,
             position: 'inside',
@@ -193,7 +193,7 @@ function renderDonut() {
             formatter: p => p.percent.toFixed(1) + '%'
           }
         },
-        data: devData.filter(d => d.value > 0).map(d => ({ name: T(d.label), value: d.value, itemStyle: { color: d.color } }))
+        data: devData.filter(d => d.value > 0).map(d => ({ name: T(d.label), value: d.value, itemStyle: { color: d.color, shadowBlur: 14, shadowColor: d.color + '73' } }))
       }]
     });
   } else {
@@ -207,7 +207,7 @@ function renderSensors() {
   const rows = SENSOR_TYPES.map(t => {
     const total = props.reduce((s, p) => s + p.sensors.find(x => x.key === t.key).total, 0);
     const abn = props.reduce((s, p) => s + p.sensors.find(x => x.key === t.key).abnormal, 0);
-    return { label: `${icon(({ fire: 'flame', water: 'droplet', hvac: 'fan', pump: 'pump', comm: 'comm' })[t.key], 14)} ${T(t.full)}`, total, normal: total - abn, abnormal: abn };
+    return { label: `${icon(({ fire: 'flame', water: 'droplet', hvac: 'fan', pump: 'pump', comm: 'comm' })[t.key], 14)} ${T(t.full)}`, total, normal: total - abn, abnormal: abn, color: t.key === 'comm' ? C.purple : undefined };
   });
   const st = scopeStats();
   document.getElementById('sensorSub').textContent = `${T('正常率')} ${((st.sensors - st.sensorAbn) / st.sensors * 100).toFixed(2)}%`;
@@ -457,7 +457,7 @@ function tourStep() {
   tourState.i++;
   setTourFocus(p.id);
   showHoverCard(p);
-  tourTag.style.display = 'flex';
+  if (tourTag) tourTag.style.display = 'flex';
 }
 function startTour() {
   stopTour();
