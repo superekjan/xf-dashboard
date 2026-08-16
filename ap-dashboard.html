@@ -21,22 +21,22 @@
             --accent-green: #30D158;
 
             /* —— 字号阶梯 —— */
-            --text-xs: 10px;
-            --text-sm: 11px;
-            --text-md: 12px;
-            --text-lg: 13px;
-            --text-xl: 15px;
-            --text-2xl: 17px;
-            --text-3xl: 22px;
-            --text-stat: 26px;
+            --text-xs: 9px;
+            --text-sm: 10px;
+            --text-md: 11px;
+            --text-lg: 12px;
+            --text-xl: 14px;
+            --text-2xl: 15px;
+            --text-3xl: 20px;
+            --text-stat: 24px;
 
             /* —— 间距阶梯 —— */
             --space-xs: 4px;
             --space-sm: 8px;
-            --space-md: 12px;
-            --space-lg: 16px;
-            --space-xl: 20px;
-            --space-2xl: 24px;
+            --space-md: 11px;
+            --space-lg: 14px;
+            --space-xl: 17px;
+            --space-2xl: 21px;
 
             /* —— 圆角阶梯 —— */
             --radius-sm: 10px;
@@ -279,11 +279,11 @@
         .app-container {
             position: relative;
             z-index: 1;
-            width: 96vw;
-            height: 92vh;
+            width: 94vw;
+            height: 89vh;
             display: grid;
-            grid-template-columns: 84px minmax(0, 1fr) clamp(280px, 24vw, 348px);
-            grid-template-rows: 68px minmax(0, 1fr) clamp(200px, 24vh, 236px);
+            grid-template-columns: 76px minmax(0, 1fr) clamp(258px, 22vw, 320px);
+            grid-template-rows: 60px minmax(0, 1fr) clamp(180px, 22vh, 212px);
             gap: var(--space-lg);
         }
 
@@ -1999,7 +1999,7 @@
         pieChart.setOption({
             tooltip: { ...tipStyle(), formatter: '{b}: {c} ({d}%)' },
             series: [{
-                type: 'pie', radius: '80%', center: ['30%', '50%'],
+                type: 'pie', radius: '70%', center: ['50%', '50%'],
                 label: { show: false }, labelLine: { show: false },
                 itemStyle: { borderRadius: 3, borderColor: th.pieBorder, borderWidth: 1.5 },
                 emphasis: {
